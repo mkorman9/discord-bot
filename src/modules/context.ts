@@ -6,7 +6,7 @@ export interface DirectMessageEvent {
 
 export interface GuildMessageEvent {
   message: string;
-  guidId: string;
+  guildId: string;
 }
 
 export interface CronEvent {}
@@ -37,15 +37,11 @@ class Context {
     props: EventProps[E] | null = null
   ): Context {
     if (event === 'directMessage') {
-      this.directMessageListeners.push(listener as (event: DirectMessageEvent) => Awaitable<void>);
+      this.onDirectMessage(listener as (event: DirectMessageEvent) => Awaitable<void>);
     } else if (event === 'guildMessage') {
-      this.guildMessageListeners.push(listener as (event: GuildMessageEvent) => Awaitable<void>);
+      this.onGuildMessage(listener as (event: GuildMessageEvent) => Awaitable<void>);
     } else if (event === 'cron') {
-      if (!props?.runAt) {
-        throw new Error('runAt needs to specified when declaring cron listener');
-      }
-
-      this.scheduleCron(listener as (event: CronEvent) => Awaitable<void>, props.runAt);
+      this.onCron(listener as (event: CronEvent) => Awaitable<void>, props?.runAt);
     }
 
     return this;
@@ -53,16 +49,36 @@ class Context {
 
   emit<E extends keyof EventArgs>(event: E, ...args: EventArgs[E]): Context {
     if (event === 'directMessage') {
-      this.directMessageListeners.forEach(l => l(args[0] as DirectMessageEvent));
+      this.emitDirectMessage(args[0] as DirectMessageEvent);
     } else if (event === 'guildMessage') {
-      this.guildMessageListeners.forEach(l => l(args[0] as GuildMessageEvent));
+      this.emitGuildMessage(args[0] as GuildMessageEvent);
     }
 
     return this;
   }
 
-  private scheduleCron(listener: (event: CronEvent) => Awaitable<void>, runAt: string) {
+  private onDirectMessage(listener: (event: DirectMessageEvent) => Awaitable<void>) {
+    this.directMessageListeners.push(listener);
+  }
+
+  private onGuildMessage(listener: (event: GuildMessageEvent) => Awaitable<void>) {
+    this.guildMessageListeners.push(listener);
+  }
+
+  private onCron(listener: (event: CronEvent) => Awaitable<void>, runAt?: string) {
+    if (!runAt) {
+      throw new Error('runAt needs to specified when declaring cron listener');
+    }
+    
     console.log(`Declaring cron ${listener} to run at ${runAt}`);
+  }
+
+  private emitDirectMessage(event: DirectMessageEvent) {
+    this.directMessageListeners.forEach(l => l(event));
+  }
+
+  private emitGuildMessage(event: GuildMessageEvent) {
+    this.guildMessageListeners.forEach(l => l(event));
   }
 }
 

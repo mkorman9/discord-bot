@@ -14,4 +14,4 @@ context.on(
   }
 );
 
-context.emit('guildMessage', { message: 'Hello world!', guidId: '12345' });
+context.emit('guildMessage', { message: 'Hello world!', guildId: '12345' });
