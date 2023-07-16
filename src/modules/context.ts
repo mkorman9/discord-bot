@@ -34,7 +34,7 @@ class Context {
   on<E extends keyof EventArgs>(
     event: E,
     listener: (...args: EventArgs[E]) => Awaitable<void>,
-    props: EventProps[E] | null = null
+    props: EventProps[E] | undefined = undefined
   ): Context {
     if (event === 'directMessage') {
       this.onDirectMessage(listener as (event: DirectMessageEvent) => Awaitable<void>);
