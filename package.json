@@ -15,6 +15,7 @@
     "exec": "exec node --enable-source-maps ./dist"
   },
   "dependencies": {
+    "discord.js": "^14.11.0",
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
