@@ -29,6 +29,11 @@ export class GlobalContext {
     await this.client.login(config.DISCORD_TOKEN);
   }
 
+  destroy() {
+    this.modules.forEach(m => m.unload());
+    this.client.destroy();
+  }
+
   loadModule(moduleName: string, m: Module) {
     this.modules.set(moduleName, m);
   }

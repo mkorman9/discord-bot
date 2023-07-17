@@ -1,3 +1,4 @@
+import cron, { ScheduledTask } from 'node-cron';
 import globalContext from './global_context';
 import {
   Awaitable,
@@ -13,11 +14,20 @@ export class Module {
   private readyListeners: Array<(event: ReadyEvent) => Awaitable<void>> = [];
   private directMessageListeners: Array<(event: DirectMessageEvent) => Awaitable<void>> = [];
   private guildMessageListeners: Array<(event: GuildMessageEvent) => Awaitable<void>> = [];
+  private scheduledTasks: Array<ScheduledTask> = [];
 
   constructor(public name: string) {}
 
+  load() {
+    globalContext.loadModule(this.name, this);
+
+    this.scheduledTasks.forEach(t => t.start());
+  }
+
   unload() {
     globalContext.unloadModule(this.name);
+
+    this.scheduledTasks.forEach(t => t.stop());
   }
 
   on<E extends keyof EventArgs>(
@@ -70,6 +80,20 @@ export class Module {
     if (!runAt) {
       throw new Error('runAt needs to specified when declaring cron listener');
     }
+
+    const task = cron.schedule(
+      runAt,
+      () => {
+        listener({
+          timestamp: new Date()
+        });
+      },
+      {
+        scheduled: false
+      }
+    );
+
+    this.scheduledTasks.push(task);
   }
 
   private propagateReady(event: ReadyEvent) {
@@ -85,8 +109,8 @@ export class Module {
   }
 }
 
-export const declareModule = (moduleName: string, handler: (m: Module) => void) => {
+export const declareModule = (moduleName: string, prepare: (m: Module) => void) => {
   const m = new Module(moduleName);
-  globalContext.loadModule(moduleName, m);
-  handler(m);
+  prepare(m);
+  m.load();
 };

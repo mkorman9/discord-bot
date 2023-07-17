@@ -12,7 +12,9 @@ export interface GuildMessageEvent {
   message: Message;
 }
 
-export interface CronEvent {}
+export interface CronEvent {
+  timestamp: Date;
+}
 
 export interface EventArgs {
   ready: [event: ReadyEvent];
