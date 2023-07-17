@@ -1,5 +1,9 @@
 import context from './context';
 
+context.on('ready', () => {
+  // TODO
+});
+
 context.on('guildMessage', event => {
   console.log(event.message);
 });
@@ -13,5 +17,3 @@ context.on(
     runAt: '5 4 * * *'
   }
 );
-
-context.emit('guildMessage', { message: 'Hello world!', guildId: '12345' });

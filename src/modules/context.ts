@@ -1,14 +1,17 @@
+import { ChannelType, Client, Message } from 'discord.js';
+import client from '../providers/discord_client';
+import config from '../config';
+
 export type Awaitable<T> = T | PromiseLike<T>;
 
 export interface ReadyEvent {}
 
 export interface DirectMessageEvent {
-  message: string;
+  message: Message;
 }
 
 export interface GuildMessageEvent {
-  message: string;
-  guildId: string;
+  message: Message;
 }
 
 export interface CronEvent {}
@@ -31,10 +34,31 @@ export interface EventProps {
 
 class Context {
   constructor(
+    private client: Client,
     private readyListeners: Array<(event: ReadyEvent) => Awaitable<void>> = [],
     private directMessageListeners: Array<(event: DirectMessageEvent) => Awaitable<void>> = [],
     private guildMessageListeners: Array<(event: GuildMessageEvent) => Awaitable<void>> = []
   ) {}
+
+  async init() {
+    this.client.on('ready', () => {
+      this.emit('ready', {});
+    });
+
+    this.client.on('messageCreate', (msg: Message) => {
+      if (msg.channel.type === ChannelType.DM) {
+        this.emit('directMessage', {
+          message: msg
+        });
+      } else if (msg.channel.type === ChannelType.GuildText) {
+        this.emit('guildMessage', {
+          message: msg
+        });
+      }
+    });
+
+    await this.client.login(config.DISCORD_TOKEN);
+  }
 
   on<E extends keyof EventArgs>(
     event: E,
@@ -83,7 +107,7 @@ class Context {
       throw new Error('runAt needs to specified when declaring cron listener');
     }
     
-    console.log(`Declaring cron ${listener} to run at ${runAt}`);
+    console.log(`TODO: Declare cron ${listener} to run at ${runAt}`);
   }
 
   private emitReady(event: ReadyEvent) {
@@ -99,4 +123,4 @@ class Context {
   }
 }
 
-export default new Context();
+export default new Context(client);

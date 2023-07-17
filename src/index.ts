@@ -1,9 +1,17 @@
-import config from './config';
+import './config';
 import './error_handlers';
 
 import './modules';
+import context from './modules/context';
 
-const main = async () => {};
+const main = async () => {
+  try {
+    await context.init();
+  } catch (e) {
+    console.error(`Failed to initialize application: ${e}`);
+    process.exit(1);
+  }
+};
 
 main()
   .then(() => null)

@@ -1,7 +1,7 @@
 import { Client, Collection, GatewayIntentBits, Partials } from 'discord.js';
 
 // fix problem with missing "commands" property
-declare module "discord.js" {
+declare module 'discord.js' {
   export interface Client {
     commands: Collection<unknown, unknown>;
   }
