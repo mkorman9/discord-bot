@@ -2,7 +2,7 @@ import './config';
 import './error_handlers';
 
 import './modules';
-import context from './modules/context';
+import context from './modules/common/global_context';
 
 const main = async () => {
   try {

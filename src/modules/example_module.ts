@@ -1,19 +1,25 @@
-import context from './context';
+import { declareModule } from './common/module';
 
-context.on('ready', () => {
-  // TODO
+declareModule('example_module', m => {
+  m.on('ready', () => {
+    console.log('ready!');
+  });
+
+  m.on('guildMessage', event => {
+    if (event.message.author.bot) {
+      return;
+    }
+
+    event.message.reply(`hello from module: ${m.name}`);
+  });
+
+  m.on(
+    'cron',
+    event => {
+      console.log(`Scheduled event ${event}`);
+    },
+    {
+      runAt: '5 4 * * *'
+    }
+  );
 });
-
-context.on('guildMessage', event => {
-  console.log(event.message);
-});
-
-context.on(
-  'cron',
-  event => {
-    console.log(`Scheduled event ${event}`);
-  },
-  {
-    runAt: '5 4 * * *'
-  }
-);
