@@ -1,17 +1,24 @@
-import { Client, GatewayIntentBits, Partials } from 'discord.js';
+import { Client, Collection, GatewayIntentBits, Partials } from 'discord.js';
 
-const intents = [
-  GatewayIntentBits.Guilds,
-  GatewayIntentBits.GuildMessages,
-  GatewayIntentBits.GuildVoiceStates,
-  GatewayIntentBits.DirectMessages
-];
+// fix problem with missing "commands" property
+declare module "discord.js" {
+  export interface Client {
+    commands: Collection<unknown, unknown>;
+  }
+}
 
-const partials = [
-  Partials.Channel
-];
-
-export default new Client({
-  intents,
-  partials
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.DirectMessages
+  ],
+  partials: [
+    Partials.Channel
+  ]
 });
+
+client.commands = new Collection();
+
+export default client;
