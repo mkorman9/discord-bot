@@ -1,4 +1,4 @@
-import { Message } from 'discord.js';
+import { CacheType, CommandInteraction, Message } from 'discord.js';
 
 export type Awaitable<T> = T | PromiseLike<T>;
 
@@ -16,18 +16,30 @@ export interface CronEvent {
   timestamp: Date;
 }
 
+export interface CommandEvent {
+  interaction: CommandInteraction<CacheType>;
+}
+
 export interface EventArgs {
   ready: [event: ReadyEvent];
   directMessage: [event: DirectMessageEvent];
   guildMessage: [event: GuildMessageEvent];
   cron: [event: CronEvent];
+  command: [event: CommandEvent];
+}
+
+export interface CronEventProps {
+  runAt: string;
+}
+
+export interface CommandEventProps {
+  name: string;
 }
 
 export interface EventProps {
   ready: void;
   directMessage: void;
   guildMessage: void;
-  cron: {
-    runAt: string;
-  };
+  cron: CronEventProps;
+  command: CommandEventProps;
 }

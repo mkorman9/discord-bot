@@ -1,3 +1,4 @@
+import { SlashCommandBuilder } from 'discord.js';
 import { declareModule } from './common/module';
 
 declareModule('example_module', m => {
@@ -22,4 +23,20 @@ declareModule('example_module', m => {
       runAt: '05 * * * * *'
     }
   );
+
+  m.registerCommand(
+    new SlashCommandBuilder()
+      .setName('hello')
+      .setDescription('responds with hello')
+  );
+
+  m.on(
+    'command',
+    event => {
+      event.interaction.reply('Hello!');
+    },
+    {
+      name: 'hello'
+    }
+  )
 });

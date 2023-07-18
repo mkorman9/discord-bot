@@ -2,31 +2,34 @@ import cron, { ScheduledTask } from 'node-cron';
 import globalContext from './global_context';
 import {
   Awaitable,
+  CommandEvent,
+  CommandEventProps,
   CronEvent,
+  CronEventProps,
   DirectMessageEvent,
   EventArgs,
   EventProps,
   GuildMessageEvent,
   ReadyEvent
 } from './types';
+import { SlashCommandBuilder } from 'discord.js';
 
 export class Module {
   private readyListeners: Array<(event: ReadyEvent) => Awaitable<void>> = [];
   private directMessageListeners: Array<(event: DirectMessageEvent) => Awaitable<void>> = [];
   private guildMessageListeners: Array<(event: GuildMessageEvent) => Awaitable<void>> = [];
   private scheduledTasks: Array<ScheduledTask> = [];
+  private commandListeners = new Map<string, Array<(event: CommandEvent) => Awaitable<void>>>();
 
   constructor(public name: string) {}
 
   load() {
     globalContext.loadModule(this.name, this);
-
     this.scheduledTasks.forEach(t => t.start());
   }
 
   unload() {
     globalContext.unloadModule(this.name);
-
     this.scheduledTasks.forEach(t => t.stop());
   }
 
@@ -42,7 +45,11 @@ export class Module {
     } else if (event === 'guildMessage') {
       this.onGuildMessage(listener as (event: GuildMessageEvent) => Awaitable<void>);
     } else if (event === 'cron') {
-      this.onCron(listener as (event: CronEvent) => Awaitable<void>, props?.runAt);
+      const cronProps = props as (CronEventProps | undefined);
+      this.onCron(listener as (event: CronEvent) => Awaitable<void>, cronProps?.runAt);
+    } else if (event === 'command') {
+      const commandProps = props as (CommandEventProps | undefined);
+      this.onCommand(listener as (event: CommandEvent) => Awaitable<void>, commandProps?.name);
     }
 
     return this;
@@ -59,8 +66,15 @@ export class Module {
       this.propagateDirectMessage(args[0] as DirectMessageEvent);
     } else if (event === 'guildMessage') {
       this.propagateGuildMessage(args[0] as GuildMessageEvent);
+    } else if (event === 'command') {
+      this.propagateCommand(args[0] as CommandEvent);
     }
 
+    return this;
+  }
+
+  registerCommand(builder: SlashCommandBuilder): Module {
+    globalContext.registerApplicationCommand(builder);
     return this;
   }
 
@@ -96,6 +110,18 @@ export class Module {
     this.scheduledTasks.push(task);
   }
 
+  private onCommand(listener: (event: CommandEvent) => Awaitable<void>, name? :string) {
+    if (!name) {
+      throw new Error('command name needs to specified when declaring command listener');
+    }
+
+    if (!this.commandListeners.has(name)) {
+      this.commandListeners.set(name, []);
+    }
+
+    this.commandListeners.get(name)?.push(listener);
+  }
+
   private propagateReady(event: ReadyEvent) {
     this.readyListeners.forEach(l => l(event));
   }
@@ -106,6 +132,11 @@ export class Module {
 
   private propagateGuildMessage(event: GuildMessageEvent) {
     this.guildMessageListeners.forEach(l => l(event));
+  }
+
+  private propagateCommand(event: CommandEvent) {
+    const listeners = this.commandListeners.get(event.interaction.commandName) || [];
+    listeners.forEach(l => l(event));
   }
 }
 

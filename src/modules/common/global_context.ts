@@ -1,13 +1,14 @@
-import { ChannelType, Client, Message } from 'discord.js';
-import client from '../../providers/discord_client';
+import { ChannelType, Client, Message, SlashCommandBuilder } from 'discord.js';
+import client, { registerCommands } from '../../providers/discord_client';
 import config from '../../config';
 import { EventArgs } from './types';
 import { Module } from './module';
 
 export class GlobalContext {
   private modules = new Map<string, Module>();
+  private commands: SlashCommandBuilder[] = [];
 
-  constructor(private client: Client) {}
+  constructor(public client: Client) {}
 
   async init() {
     this.client.on('ready', () => {
@@ -26,7 +27,14 @@ export class GlobalContext {
       }
     });
 
+    this.client.on('interactionCreate', interaction => {
+      if (interaction.isCommand()) {
+        this.emit('command', { interaction });
+      }
+    });
+
     await this.client.login(config.DISCORD_TOKEN);
+    await registerCommands(this.commands);
   }
 
   destroy() {
@@ -46,6 +54,10 @@ export class GlobalContext {
     this.modules.forEach(m => {
       m.propagate(event, ...args);
     });
+  }
+
+  registerApplicationCommand(builder: SlashCommandBuilder) {
+    this.commands.push(builder);
   }
 }
 
