@@ -14,91 +14,102 @@ import {
 } from './types';
 import { SlashCommandBuilder } from 'discord.js';
 
-export class Module {
-  private readyListeners: Array<(event: ReadyEvent) => Awaitable<void>> = [];
-  private directMessageListeners: Array<(event: DirectMessageEvent) => Awaitable<void>> = [];
-  private guildMessageListeners: Array<(event: GuildMessageEvent) => Awaitable<void>> = [];
+interface ListenersStore {
+  onLoad: () => void;
+  onUnload: () => void;
+  add: <E extends keyof EventArgs>(
+    listener: (...args: EventArgs[E]) => Awaitable<void>,
+    props: EventProps[E] | undefined
+  ) => void;
+  call: <E extends keyof EventArgs>(...args: EventArgs[E]) => void;
+}
+
+class OnReadyListenersStore {
+  private listeners: Array<(event: ReadyEvent) => Awaitable<void>> = [];
+
+  onLoad() {}
+
+  onUnload() {}
+
+  add<E extends keyof EventArgs>(
+    listener: (...args: EventArgs[E]) => Awaitable<void>,
+    props: EventProps[E] | undefined
+  ) {
+    const l = listener as (event: ReadyEvent) => Awaitable<void>;
+    this.listeners.push(l);
+  }
+
+  call<E extends keyof EventArgs>(...args: EventArgs[E]) {
+    this.listeners.forEach(l => l(args[0] as ReadyEvent));
+  }
+}
+
+class OnDirectMessageListenersStore {
+  private listeners: Array<(event: DirectMessageEvent) => Awaitable<void>> = [];
+
+  onLoad() {}
+
+  onUnload() {}
+
+  add<E extends keyof EventArgs>(
+    listener: (...args: EventArgs[E]) => Awaitable<void>,
+    props: EventProps[E] | undefined
+  ) {
+    const l = listener as (event: DirectMessageEvent) => Awaitable<void>;
+    this.listeners.push(l);
+  }
+
+  call<E extends keyof EventArgs>(...args: EventArgs[E]) {
+    this.listeners.forEach(l => l(args[0] as DirectMessageEvent));
+  }
+}
+
+class OnGuildMessageListenersStore {
+  private listeners: Array<(event: GuildMessageEvent) => Awaitable<void>> = [];
+
+  onLoad() {}
+
+  onUnload() {}
+
+  add<E extends keyof EventArgs>(
+    listener: (...args: EventArgs[E]) => Awaitable<void>,
+    props: EventProps[E] | undefined
+  ) {
+    const l = listener as (event: GuildMessageEvent) => Awaitable<void>;
+    this.listeners.push(l);
+  }
+
+  call<E extends keyof EventArgs>(...args: EventArgs[E]) {
+    this.listeners.forEach(l => l(args[0] as GuildMessageEvent));
+  }
+}
+
+class OnCronListenersStore {
   private scheduledTasks: Array<ScheduledTask> = [];
-  private commandListeners = new Map<string, Array<(event: CommandEvent) => Awaitable<void>>>();
 
-  constructor(public name: string) {}
-
-  load() {
-    globalContext.loadModule(this.name, this);
+  onLoad() {
     this.scheduledTasks.forEach(t => t.start());
   }
 
-  unload() {
-    globalContext.unloadModule(this.name);
+  onUnload() {
     this.scheduledTasks.forEach(t => t.stop());
   }
 
-  on<E extends keyof EventArgs>(
-    event: E,
+  add<E extends keyof EventArgs>(
     listener: (...args: EventArgs[E]) => Awaitable<void>,
-    props: EventProps[E] | undefined = undefined
-  ): Module {
-    if (event === 'ready') {
-      this.onReady(listener as (event: ReadyEvent) => Awaitable<void>);
-    } else if (event === 'directMessage') {
-      this.onDirectMessage(listener as (event: DirectMessageEvent) => Awaitable<void>);
-    } else if (event === 'guildMessage') {
-      this.onGuildMessage(listener as (event: GuildMessageEvent) => Awaitable<void>);
-    } else if (event === 'cron') {
-      const cronProps = props as (CronEventProps | undefined);
-      this.onCron(listener as (event: CronEvent) => Awaitable<void>, cronProps?.runAt);
-    } else if (event === 'command') {
-      const commandProps = props as (CommandEventProps | undefined);
-      this.onCommand(listener as (event: CommandEvent) => Awaitable<void>, commandProps?.name);
-    }
+    props: EventProps[E] | undefined
+  ) {
+    const l = listener as (event: CronEvent) => Awaitable<void>;
+    const cronProps = props as CronEventProps | undefined;
 
-    return this;
-  }
-
-  emit<E extends keyof EventArgs>(event: E, ...args: EventArgs[E]) {
-    globalContext.emit(event, ...args);
-  }
-
-  propagate<E extends keyof EventArgs>(event: E, ...args: EventArgs[E]): Module {
-    if (event === 'ready') {
-      this.propagateReady(args[0] as ReadyEvent);
-    } else if (event === 'directMessage') {
-      this.propagateDirectMessage(args[0] as DirectMessageEvent);
-    } else if (event === 'guildMessage') {
-      this.propagateGuildMessage(args[0] as GuildMessageEvent);
-    } else if (event === 'command') {
-      this.propagateCommand(args[0] as CommandEvent);
-    }
-
-    return this;
-  }
-
-  registerCommand(builder: SlashCommandBuilder): Module {
-    globalContext.registerCommand(builder);
-    return this;
-  }
-
-  private onReady(listener: (event: ReadyEvent) => Awaitable<void>) {
-    this.readyListeners.push(listener);
-  }
-
-  private onDirectMessage(listener: (event: DirectMessageEvent) => Awaitable<void>) {
-    this.directMessageListeners.push(listener);
-  }
-
-  private onGuildMessage(listener: (event: GuildMessageEvent) => Awaitable<void>) {
-    this.guildMessageListeners.push(listener);
-  }
-
-  private onCron(listener: (event: CronEvent) => Awaitable<void>, runAt?: string) {
-    if (!runAt) {
+    if (!cronProps?.runAt) {
       throw new Error('runAt needs to specified when declaring cron listener');
     }
 
     const task = cron.schedule(
-      runAt,
+      cronProps.runAt,
       () => {
-        listener({
+        l({
           timestamp: new Date()
         });
       },
@@ -110,33 +121,83 @@ export class Module {
     this.scheduledTasks.push(task);
   }
 
-  private onCommand(listener: (event: CommandEvent) => Awaitable<void>, name? :string) {
-    if (!name) {
+  call<E extends keyof EventArgs>(...args: EventArgs[E]) {}
+}
+
+class OnCommandListenersStore {
+  private listeners = new Map<string, Array<(event: CommandEvent) => Awaitable<void>>>();
+
+  onLoad() {}
+
+  onUnload() {}
+
+  add<E extends keyof EventArgs>(
+    listener: (...args: EventArgs[E]) => Awaitable<void>,
+    props: EventProps[E] | undefined
+  ) {
+    const l = listener as (event: CommandEvent) => Awaitable<void>;
+    const commandProps = props as CommandEventProps | undefined;
+
+    if (!commandProps?.name) {
       throw new Error('command name needs to specified when declaring command listener');
     }
 
-    if (!this.commandListeners.has(name)) {
-      this.commandListeners.set(name, []);
+    if (!this.listeners.has(commandProps.name)) {
+      this.listeners.set(commandProps.name, []);
     }
 
-    this.commandListeners.get(name)?.push(listener);
+    this.listeners.get(commandProps.name)?.push(l);
   }
 
-  private propagateReady(event: ReadyEvent) {
-    this.readyListeners.forEach(l => l(event));
-  }
-
-  private propagateDirectMessage(event: DirectMessageEvent) {
-    this.directMessageListeners.forEach(l => l(event));
-  }
-
-  private propagateGuildMessage(event: GuildMessageEvent) {
-    this.guildMessageListeners.forEach(l => l(event));
-  }
-
-  private propagateCommand(event: CommandEvent) {
-    const listeners = this.commandListeners.get(event.interaction.commandName) || [];
+  call<E extends keyof EventArgs>(...args: EventArgs[E]) {
+    const event = args[0] as CommandEvent;
+    const listeners = this.listeners.get(event.interaction.commandName) || [];
     listeners.forEach(l => l(event));
+  }
+}
+
+export class Module {
+  private listeners = new Map<string, ListenersStore>();
+
+  constructor(public name: string) {
+    this.listeners.set('ready', new OnReadyListenersStore());
+    this.listeners.set('directMessage', new OnDirectMessageListenersStore());
+    this.listeners.set('guildMessage', new OnGuildMessageListenersStore());
+    this.listeners.set('cron', new OnCronListenersStore());
+    this.listeners.set('command', new OnCommandListenersStore());
+  }
+
+  load() {
+    globalContext.loadModule(this.name, this);
+    this.listeners.forEach(l => l.onLoad);
+  }
+
+  unload() {
+    globalContext.unloadModule(this.name);
+    this.listeners.forEach(l => l.onUnload());
+  }
+
+  on<E extends keyof EventArgs>(
+    event: E,
+    listener: (...args: EventArgs[E]) => Awaitable<void>,
+    props: EventProps[E] | undefined = undefined
+  ): Module {
+    this.listeners.get(event)?.add(listener, props);
+    return this;
+  }
+
+  emit<E extends keyof EventArgs>(event: E, ...args: EventArgs[E]) {
+    globalContext.emit(event, ...args);
+  }
+
+  propagate<E extends keyof EventArgs>(event: E, ...args: EventArgs[E]): Module {
+    this.listeners.get(event)?.call(...args);
+    return this;
+  }
+
+  registerCommand(builder: SlashCommandBuilder): Module {
+    globalContext.registerCommand(builder);
+    return this;
   }
 }
 

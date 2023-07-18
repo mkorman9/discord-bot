@@ -24,11 +24,7 @@ declareModule('example_module', m => {
     }
   );
 
-  m.registerCommand(
-    new SlashCommandBuilder()
-      .setName('hello')
-      .setDescription('responds with hello')
-  );
+  m.registerCommand(new SlashCommandBuilder().setName('hello').setDescription('responds with hello'));
 
   m.on(
     'command',
@@ -38,5 +34,5 @@ declareModule('example_module', m => {
     {
       name: 'hello'
     }
-  )
+  );
 });
