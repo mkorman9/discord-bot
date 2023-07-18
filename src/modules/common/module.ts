@@ -12,7 +12,8 @@ import {
   GuildMessageEvent,
   ReadyEvent
 } from './types';
-import { SlashCommandBuilder } from 'discord.js';
+import { Client, SlashCommandBuilder } from 'discord.js';
+import client from '../../providers/discord_client';
 
 interface ListenersStore {
   onLoad: () => void;
@@ -159,7 +160,10 @@ class OnCommandListenersStore {
 export class Module {
   private listeners = new Map<string, ListenersStore>();
 
-  constructor(public name: string) {
+  constructor(
+    public name: string,
+    public client: Client
+  ) {
     this.listeners.set('ready', new OnReadyListenersStore());
     this.listeners.set('directMessage', new OnDirectMessageListenersStore());
     this.listeners.set('guildMessage', new OnGuildMessageListenersStore());
@@ -202,7 +206,7 @@ export class Module {
 }
 
 export const declareModule = (moduleName: string, prepare: (m: Module) => void) => {
-  const m = new Module(moduleName);
+  const m = new Module(moduleName, client);
   prepare(m);
   m.load();
 };
