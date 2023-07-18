@@ -74,7 +74,7 @@ export class Module {
   }
 
   registerCommand(builder: SlashCommandBuilder): Module {
-    globalContext.registerApplicationCommand(builder);
+    globalContext.registerCommand(builder);
     return this;
   }
 

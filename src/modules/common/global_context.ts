@@ -1,5 +1,13 @@
-import { ChannelType, Client, Message, SlashCommandBuilder } from 'discord.js';
-import client, { registerCommands } from '../../providers/discord_client';
+import {
+  ChannelType,
+  Client,
+  Message,
+  REST,
+  RESTPostAPIChatInputApplicationCommandsJSONBody,
+  Routes,
+  SlashCommandBuilder
+} from 'discord.js';
+import client from '../../providers/discord_client';
 import config from '../../config';
 import { EventArgs } from './types';
 import { Module } from './module';
@@ -34,7 +42,7 @@ export class GlobalContext {
     });
 
     await this.client.login(config.DISCORD_TOKEN);
-    await registerCommands(this.commands);
+    await this.performCommandsRegistration();
   }
 
   destroy() {
@@ -56,8 +64,16 @@ export class GlobalContext {
     });
   }
 
-  registerApplicationCommand(builder: SlashCommandBuilder) {
+  registerCommand(builder: SlashCommandBuilder) {
     this.commands.push(builder);
+  }
+
+  private async performCommandsRegistration() {
+    const payload: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
+    this.commands.forEach(c => payload.push(c.toJSON()));
+
+    const rest = new REST().setToken(config.DISCORD_TOKEN);
+    await rest.put(Routes.applicationCommands(config.DISCORD_APP_ID), { body: payload });
   }
 }
 
