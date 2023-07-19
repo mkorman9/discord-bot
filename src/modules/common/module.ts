@@ -174,7 +174,7 @@ export class Module {
 
   load() {
     globalContext.loadModule(this.name, this);
-    this.listeners.forEach(l => l.onLoad);
+    this.listeners.forEach(l => l.onLoad());
   }
 
   unload() {
