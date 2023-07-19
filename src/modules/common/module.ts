@@ -8,6 +8,7 @@ import {
   CronEventProps,
   DirectMessageEvent,
   EventArgs,
+  EventHandler,
   EventProps,
   GuildMessageEvent,
   ReadyEvent
@@ -26,7 +27,7 @@ interface ListenersStore {
 }
 
 class OnReadyListenersStore {
-  private listeners: Array<(event: ReadyEvent) => Awaitable<void>> = [];
+  private listeners: EventHandler<ReadyEvent>[] = [];
 
   onLoad() {}
 
@@ -36,7 +37,7 @@ class OnReadyListenersStore {
     listener: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) {
-    const l = listener as (event: ReadyEvent) => Awaitable<void>;
+    const l = listener as EventHandler<ReadyEvent>;
     this.listeners.push(l);
   }
 
@@ -46,7 +47,7 @@ class OnReadyListenersStore {
 }
 
 class OnDirectMessageListenersStore {
-  private listeners: Array<(event: DirectMessageEvent) => Awaitable<void>> = [];
+  private listeners: EventHandler<DirectMessageEvent>[] = [];
 
   onLoad() {}
 
@@ -56,7 +57,7 @@ class OnDirectMessageListenersStore {
     listener: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) {
-    const l = listener as (event: DirectMessageEvent) => Awaitable<void>;
+    const l = listener as EventHandler<DirectMessageEvent>;
     this.listeners.push(l);
   }
 
@@ -66,7 +67,7 @@ class OnDirectMessageListenersStore {
 }
 
 class OnGuildMessageListenersStore {
-  private listeners: Array<(event: GuildMessageEvent) => Awaitable<void>> = [];
+  private listeners: EventHandler<GuildMessageEvent>[] = [];
 
   onLoad() {}
 
@@ -76,7 +77,7 @@ class OnGuildMessageListenersStore {
     listener: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) {
-    const l = listener as (event: GuildMessageEvent) => Awaitable<void>;
+    const l = listener as EventHandler<GuildMessageEvent>;
     this.listeners.push(l);
   }
 
@@ -100,7 +101,7 @@ class OnCronListenersStore {
     listener: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) {
-    const l = listener as (event: CronEvent) => Awaitable<void>;
+    const l = listener as EventHandler<CronEvent>;
     const cronProps = props as CronEventProps | undefined;
 
     if (!cronProps?.runAt) {
@@ -126,7 +127,7 @@ class OnCronListenersStore {
 }
 
 class OnCommandListenersStore {
-  private listeners = new Map<string, Array<(event: CommandEvent) => Awaitable<void>>>();
+  private listeners = new Map<string, EventHandler<CommandEvent>[]>();
 
   onLoad() {}
 
@@ -136,7 +137,7 @@ class OnCommandListenersStore {
     listener: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) {
-    const l = listener as (event: CommandEvent) => Awaitable<void>;
+    const l = listener as EventHandler<CommandEvent>;
     const commandProps = props as CommandEventProps | undefined;
 
     if (!commandProps?.name) {
