@@ -8,7 +8,7 @@ import {
   CronEventProps,
   DirectMessageEvent,
   EventArgs,
-  EventHandler as EventListenerFunc,
+  EventListenerFunc,
   EventProps,
   GuildMessageEvent,
   ReadyEvent
