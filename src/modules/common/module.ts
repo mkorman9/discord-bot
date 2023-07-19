@@ -87,7 +87,7 @@ class OnGuildMessageListenersStore {
 }
 
 class OnCronListenersStore {
-  private scheduledTasks: Array<ScheduledTask> = [];
+  private scheduledTasks: ScheduledTask[] = [];
 
   onLoad() {
     this.scheduledTasks.forEach(t => t.start());
