@@ -116,7 +116,8 @@ class OnCronListenersStore {
         });
       },
       {
-        scheduled: false
+        scheduled: false,
+        runOnInit: false
       }
     );
 
