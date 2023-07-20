@@ -20,7 +20,7 @@ declareModule('example_module', m => {
       console.log(`Scheduled event ${event}`);
     },
     {
-      runAt: '05 * * * * *'
+      runAt: '*/5 * * * * *'
     }
   );
 
