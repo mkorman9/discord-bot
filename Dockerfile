@@ -11,6 +11,7 @@ COPY --chown=node:node --from=builder package-lock.json /runtime
 
 USER node
 WORKDIR /runtime
+ENV NODE_ENV=production
 
 RUN npm ci --omit=dev
 
