@@ -8,7 +8,7 @@ import {
   CronEventProps,
   DirectMessageEvent,
   EventArgs,
-  EventListenerFunc,
+  EventHandler,
   EventProps,
   GuildMessageEvent,
   ReadyEvent
@@ -16,77 +16,77 @@ import {
 import { Client, SlashCommandBuilder } from 'discord.js';
 import client from '../../providers/discord_client';
 
-interface ListenersStore {
+interface EventListener {
   onLoad: () => void;
   onUnload: () => void;
-  add: <E extends keyof EventArgs>(
-    listener: (...args: EventArgs[E]) => Awaitable<void>,
+  addHandler: <E extends keyof EventArgs>(
+    handler: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) => void;
   call: <E extends keyof EventArgs>(...args: EventArgs[E]) => void;
 }
 
-class OnReadyListenersStore {
-  private listeners: EventListenerFunc<ReadyEvent>[] = [];
+class OnReadyListener implements EventListener {
+  private handlers: EventHandler<ReadyEvent>[] = [];
 
   onLoad() {}
 
   onUnload() {}
 
-  add<E extends keyof EventArgs>(
-    listener: (...args: EventArgs[E]) => Awaitable<void>,
+  addHandler<E extends keyof EventArgs>(
+    handler: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) {
-    const l = listener as EventListenerFunc<ReadyEvent>;
-    this.listeners.push(l);
+    const h = handler as EventHandler<ReadyEvent>;
+    this.handlers.push(h);
   }
 
   call<E extends keyof EventArgs>(...args: EventArgs[E]) {
-    this.listeners.forEach(l => l(args[0] as ReadyEvent));
+    this.handlers.forEach(h => h(args[0] as ReadyEvent));
   }
 }
 
-class OnDirectMessageListenersStore {
-  private listeners: EventListenerFunc<DirectMessageEvent>[] = [];
+class OnDirectMessageListener implements EventListener {
+  private handlers: EventHandler<DirectMessageEvent>[] = [];
 
   onLoad() {}
 
   onUnload() {}
 
-  add<E extends keyof EventArgs>(
-    listener: (...args: EventArgs[E]) => Awaitable<void>,
+  addHandler<E extends keyof EventArgs>(
+    handler: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) {
-    const l = listener as EventListenerFunc<DirectMessageEvent>;
-    this.listeners.push(l);
+    const h = handler as EventHandler<DirectMessageEvent>;
+    this.handlers.push(h);
   }
 
   call<E extends keyof EventArgs>(...args: EventArgs[E]) {
-    this.listeners.forEach(l => l(args[0] as DirectMessageEvent));
+    this.handlers.forEach(h => h(args[0] as DirectMessageEvent));
   }
 }
 
-class OnGuildMessageListenersStore {
-  private listeners: EventListenerFunc<GuildMessageEvent>[] = [];
+class OnGuildMessageListener implements EventListener {
+  private handlers: EventHandler<GuildMessageEvent>[] = [];
 
   onLoad() {}
 
   onUnload() {}
 
-  add<E extends keyof EventArgs>(
-    listener: (...args: EventArgs[E]) => Awaitable<void>,
+  addHandler<E extends keyof EventArgs>(
+    handler: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) {
-    const l = listener as EventListenerFunc<GuildMessageEvent>;
-    this.listeners.push(l);
+    const h = handler as EventHandler<GuildMessageEvent>;
+    this.handlers.push(h);
   }
 
   call<E extends keyof EventArgs>(...args: EventArgs[E]) {
-    this.listeners.forEach(l => l(args[0] as GuildMessageEvent));
+    this.handlers.forEach(h => h(args[0] as GuildMessageEvent));
   }
 }
 
-class OnCronListenersStore {
+class OnCronListener implements EventListener {
   private scheduledTasks: ScheduledTask[] = [];
 
   onLoad() {
@@ -97,21 +97,21 @@ class OnCronListenersStore {
     this.scheduledTasks.forEach(t => t.stop());
   }
 
-  add<E extends keyof EventArgs>(
-    listener: (...args: EventArgs[E]) => Awaitable<void>,
+  addHandler<E extends keyof EventArgs>(
+    handler: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) {
-    const l = listener as EventListenerFunc<CronEvent>;
+    const h = handler as EventHandler<CronEvent>;
     const cronProps = props as CronEventProps | undefined;
 
     if (!cronProps?.runAt) {
-      throw new Error('runAt needs to specified when declaring cron listener');
+      throw new Error('runAt needs to specified when declaring cron handler');
     }
 
     const task = cron.schedule(
       cronProps.runAt,
       () => {
-        l({
+        h({
           timestamp: new Date()
         });
       },
@@ -127,50 +127,50 @@ class OnCronListenersStore {
   call<E extends keyof EventArgs>(...args: EventArgs[E]) {}
 }
 
-class OnCommandListenersStore {
-  private listeners = new Map<string, EventListenerFunc<CommandEvent>[]>();
+class OnCommandListener implements EventListener {
+  private handlers = new Map<string, EventHandler<CommandEvent>[]>();
 
   onLoad() {}
 
   onUnload() {}
 
-  add<E extends keyof EventArgs>(
-    listener: (...args: EventArgs[E]) => Awaitable<void>,
+  addHandler<E extends keyof EventArgs>(
+    handler: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined
   ) {
-    const l = listener as EventListenerFunc<CommandEvent>;
+    const h = handler as EventHandler<CommandEvent>;
     const commandProps = props as CommandEventProps | undefined;
 
     if (!commandProps?.name) {
-      throw new Error('command name needs to specified when declaring command listener');
+      throw new Error('command name needs to specified when declaring command handler');
     }
 
-    if (!this.listeners.has(commandProps.name)) {
-      this.listeners.set(commandProps.name, []);
+    if (!this.handlers.has(commandProps.name)) {
+      this.handlers.set(commandProps.name, []);
     }
 
-    this.listeners.get(commandProps.name)?.push(l);
+    this.handlers.get(commandProps.name)?.push(h);
   }
 
   call<E extends keyof EventArgs>(...args: EventArgs[E]) {
     const event = args[0] as CommandEvent;
-    const listeners = this.listeners.get(event.interaction.commandName) || [];
-    listeners.forEach(l => l(event));
+    const listeners = this.handlers.get(event.interaction.commandName) || [];
+    listeners.forEach(h => h(event));
   }
 }
 
 export class Module {
-  private listeners = new Map<string, ListenersStore>();
+  private listeners = new Map<string, EventListener>();
 
   constructor(
     public name: string,
     public client: Client
   ) {
-    this.listeners.set('ready', new OnReadyListenersStore());
-    this.listeners.set('directMessage', new OnDirectMessageListenersStore());
-    this.listeners.set('guildMessage', new OnGuildMessageListenersStore());
-    this.listeners.set('cron', new OnCronListenersStore());
-    this.listeners.set('command', new OnCommandListenersStore());
+    this.listeners.set('ready', new OnReadyListener());
+    this.listeners.set('directMessage', new OnDirectMessageListener());
+    this.listeners.set('guildMessage', new OnGuildMessageListener());
+    this.listeners.set('cron', new OnCronListener());
+    this.listeners.set('command', new OnCommandListener());
   }
 
   load() {
@@ -188,7 +188,7 @@ export class Module {
     listener: (...args: EventArgs[E]) => Awaitable<void>,
     props: EventProps[E] | undefined = undefined
   ): Module {
-    this.listeners.get(event)?.add(listener, props);
+    this.listeners.get(event)?.addHandler(listener, props);
     return this;
   }
 

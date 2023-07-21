@@ -2,7 +2,7 @@ import { CacheType, CommandInteraction, Message } from 'discord.js';
 
 export type Awaitable<T> = T | PromiseLike<T>;
 
-export type EventListenerFunc<E> = (event: E) => Awaitable<void>;
+export type EventHandler<E> = (event: E) => Awaitable<void>;
 
 export interface ReadyEvent {}
 
