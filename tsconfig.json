@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es2020",
+    "target": "es2022",
+    "lib": ["es2022"],
     "module": "commonjs",
-    "sourceMap": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "strict": true,
     "rootDir": "src",
-    "outDir": "dist",
-    "moduleResolution": "node"
+    "outDir": "dist"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
