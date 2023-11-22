@@ -9,7 +9,7 @@ import {
 } from 'discord.js';
 import client from '../../providers/discord_client';
 import config from '../../config';
-import { EventArgs } from './types';
+import { Event } from './events';
 import { Module } from './module';
 
 export class GlobalContext {
@@ -25,19 +25,15 @@ export class GlobalContext {
 
     this.client.on('messageCreate', (msg: Message) => {
       if (msg.channel.type === ChannelType.DM) {
-        this.emit('directMessage', {
-          message: msg
-        });
+        this.emit('directMessage', msg);
       } else if (msg.channel.type === ChannelType.GuildText) {
-        this.emit('guildMessage', {
-          message: msg
-        });
+        this.emit('guildMessage', msg);
       }
     });
 
     this.client.on('interactionCreate', interaction => {
       if (interaction.isCommand()) {
-        this.emit('command', { interaction });
+        this.emit('command', interaction);
       }
     });
 
@@ -58,9 +54,9 @@ export class GlobalContext {
     this.modules.delete(moduleName);
   }
 
-  emit<E extends keyof EventArgs>(event: E, ...args: EventArgs[E]) {
+  emit<E extends keyof Event>(e: E, event: Event[E]) {
     this.modules.forEach(m => {
-      m.propagate(event, ...args);
+      m.emit(e, event);
     });
   }
 

@@ -6,33 +6,26 @@ declareModule('example_module', m => {
     console.log('ready!');
   });
 
-  m.on('guildMessage', event => {
-    if (event.message.author.bot) {
+  m.on('guildMessage', message => {
+    if (message.author.bot) {
       return;
     }
 
-    event.message.reply(`hello from module: ${m.name}`);
+    message.reply(`hello from module: ${m.name}`);
   });
 
-  m.on(
-    'cron',
-    event => {
-      console.log(`Scheduled event ${event}`);
-    },
-    {
-      runAt: '*/5 * * * * *'
-    }
-  );
+  m.cron('*/5 * * * * *', () => {
+    console.log('Scheduled event');
+  });
 
   m.registerCommand(new SlashCommandBuilder().setName('hello').setDescription('responds with hello'));
 
   m.on(
     'command',
-    event => {
-      event.interaction.reply('Hello!');
-    },
-    {
-      name: 'hello'
+    interaction => {
+      if (interaction.commandName === 'hello') {
+        interaction.reply('Hello!');
+      }
     }
   );
 });
