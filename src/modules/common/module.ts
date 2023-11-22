@@ -44,6 +44,10 @@ export class Module extends EventEmitter {
     this.cronTasks.forEach(t => t.stop());
   }
 
+  emitGlobally<E extends keyof Event>(e: E, event: Event[E]) {
+    globalContext.emit(e, event);
+  }
+
   cron(expression: string, handler: () => PromiseLike<void> | void) {
     const task = cron.schedule(
       expression,
