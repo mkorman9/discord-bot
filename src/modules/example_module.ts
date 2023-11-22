@@ -18,14 +18,12 @@ declareModule('example_module', m => {
     console.log('Scheduled event');
   });
 
-  m.registerCommand(new SlashCommandBuilder().setName('hello').setDescription('responds with hello'));
-
-  m.on(
-    'command',
+  m.command(
+    new SlashCommandBuilder()
+      .setName('hello')
+      .setDescription('responds with hello'),
     interaction => {
-      if (interaction.commandName === 'hello') {
-        interaction.reply('Hello!');
-      }
+      interaction.reply('Hello!');
     }
   );
 });
