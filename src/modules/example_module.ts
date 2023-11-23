@@ -14,12 +14,12 @@ export default declareModule('example_module', m => {
     console.log('ready');
   });
 
-  m.on('guildMessage', message => {
+  m.on('guildMessage', async message => {
     if (message.author.bot) {
       return;
     }
 
-    message.reply(`hello from module: ${m.name}`);
+    await message.reply(`hello from module: ${m.name}`);
   });
 
   m.cron('*/5 * * * * *', () => {
@@ -30,8 +30,8 @@ export default declareModule('example_module', m => {
     new SlashCommandBuilder()
       .setName('hello')
       .setDescription('responds with hello'),
-    interaction => {
-      interaction.reply('Hello!');
+    async interaction => {
+      await interaction.reply('Hello!');
     }
   );
 });
