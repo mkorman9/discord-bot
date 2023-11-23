@@ -1,8 +1,8 @@
-import {readdir} from 'fs/promises';
-import {join} from 'path';
 import './hooks';
 import './config';
 
+import {readdir} from 'fs/promises';
+import {join} from 'path';
 import {ModuleLoader} from './common/module_loader';
 import {ModuleDefinition} from './common/module';
 
