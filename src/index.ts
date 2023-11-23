@@ -1,13 +1,19 @@
 import './hooks';
 import './config';
 
-import './modules';
-import context from './modules/common/global_context';
+import {ModuleLoader} from './modules/common/module_loader';
+import {ModuleDefinition} from './modules/common/module';
+
+const modules = [
+  './modules/example_module'
+];
+const moduleLoader = new ModuleLoader();
 
 process.on('exit', () => {
-  context.destroy();
+  moduleLoader.destroy();
 });
 
-context.init()
-  .then(() => console.log('Application started'))
-  .catch(e => console.error(`Failed to start the application: ${e}`));
+Promise.all(modules.map(m => import(m)))
+  .then(definitions => moduleLoader.init(definitions.map(d => d.default as ModuleDefinition)))
+  .then(() => console.log('Application has started successfully'))
+  .catch(e => console.error(`Failed to start the application: ${e.stack}`));

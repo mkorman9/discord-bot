@@ -1,26 +1,25 @@
 import {
   ChannelType,
-  Client,
   Message,
   REST,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   Routes,
   SlashCommandBuilder
 } from 'discord.js';
-import client from './discord_client';
+import {createClient} from './discord_client';
 import config from '../../config';
-import { Event } from './events';
-import { Module } from './module';
+import {Event} from './events';
+import {Module, ModuleDefinition} from './module';
 
-export class GlobalContext {
+export class ModuleLoader {
+  public client = createClient();
+
   private modules = new Map<string, Module>();
   private commandsPerModule = new Map<string, SlashCommandBuilder[]>();
   private initialized = false;
   private destroying = false;
 
-  constructor(public client: Client) {}
-
-  async init() {
+  async init(preloadModules: ModuleDefinition[]) {
     this.client.on('ready', () => {
       this.emit('ready', {});
     });
@@ -40,6 +39,7 @@ export class GlobalContext {
     });
 
     await this.client.login(config.DISCORD_TOKEN);
+    preloadModules.forEach(m => m.load(this));
     await this.updateCommandsList();
 
     this.initialized = true;
@@ -94,5 +94,3 @@ export class GlobalContext {
     await rest.put(Routes.applicationCommands(config.DISCORD_APP_ID), { body: payload });
   }
 }
-
-export default new GlobalContext(client);
