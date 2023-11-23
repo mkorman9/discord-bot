@@ -40,7 +40,9 @@ export class ModuleLoader {
 
     await this.client.login(config.DISCORD_TOKEN);
     await Promise.all(
-      preloadModules.map(async m => await m.load(this))
+      preloadModules
+        .filter(m => !config.IGNORED_MODULES.has(m.name))
+        .map(async m => await m.load(this))
     );
     await this.updateCommandsList();
 
