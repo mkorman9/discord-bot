@@ -1,8 +1,8 @@
-import { CacheType, CommandInteraction, Message } from 'discord.js';
+import {CommandInteraction, Message} from 'discord.js';
 
 export interface Event {
-  ready: {};
+  ready: Record<string, never>;
   directMessage: Message;
   guildMessage: Message;
-  command: CommandInteraction<CacheType>;
+  command: CommandInteraction;
 }

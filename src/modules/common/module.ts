@@ -1,10 +1,11 @@
-import { CacheType, Client, CommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { EventEmitter } from 'events';
-import cron, { ScheduledTask } from 'node-cron';
+import {Client, CommandInteraction, SlashCommandBuilder} from 'discord.js';
+import {EventEmitter} from 'events';
+import cron, {ScheduledTask} from 'node-cron';
 import client from './discord_client';
 import globalContext from './global_context';
-import { Event } from './events';
+import {Event} from './events';
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export interface Module {
   on<E extends keyof Event>(
     e: E,
@@ -24,6 +25,7 @@ export interface Module {
   ): boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Module extends EventEmitter {
   private cronTasks: ScheduledTask[] = [];
 
@@ -63,7 +65,7 @@ export class Module extends EventEmitter {
 
   command(
     command: SlashCommandBuilder,
-    handler: (interaction: CommandInteraction<CacheType>) => PromiseLike<void> | void
+    handler: (interaction: CommandInteraction) => PromiseLike<void> | void
   ): Module {
     globalContext.registerCommand(this.name, command);
 
@@ -77,8 +79,8 @@ export class Module extends EventEmitter {
   }
 }
 
-export const declareModule = (moduleName: string, declare: (m: Module) => void) => {
+export const declareModule = (moduleName: string, func: (m: Module) => void) => {
   const m = new Module(moduleName, client);
-  declare(m);
+  func(m);
   m.load();
 };
