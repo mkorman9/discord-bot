@@ -65,7 +65,7 @@ export class Module extends EventEmitter {
     command: SlashCommandBuilder,
     handler: (interaction: CommandInteraction<CacheType>) => PromiseLike<void> | void
   ): Module {
-    globalContext.registerCommand(command);
+    globalContext.registerCommand(this.name, command);
 
     this.on('command', interaction => {
       if (interaction.commandName === command.name) {
@@ -77,8 +77,8 @@ export class Module extends EventEmitter {
   }
 }
 
-export const declareModule = (moduleName: string, prepare: (m: Module) => void) => {
+export const declareModule = (moduleName: string, declare: (m: Module) => void) => {
   const m = new Module(moduleName, client);
-  prepare(m);
+  declare(m);
   m.load();
 };

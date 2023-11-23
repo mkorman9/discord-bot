@@ -14,7 +14,9 @@ import { Module } from './module';
 
 export class GlobalContext {
   private modules = new Map<string, Module>();
-  private commands: SlashCommandBuilder[] = [];
+  private commandsPerModule = new Map<string, SlashCommandBuilder[]>();
+  private initialized = false;
+  private destroying = false;
 
   constructor(public client: Client) {}
 
@@ -38,20 +40,32 @@ export class GlobalContext {
     });
 
     await this.client.login(config.DISCORD_TOKEN);
-    await this.performCommandsRegistration();
+    await this.updateCommandsList();
+
+    this.initialized = true;
   }
 
   destroy() {
+    this.destroying = true;
     this.modules.forEach(m => m.unload());
     this.client.destroy();
   }
 
   loadModule(moduleName: string, m: Module) {
     this.modules.set(moduleName, m);
+
+    if (this.initialized) {
+      this.updateCommandsList();
+    }
   }
 
   unloadModule(moduleName: string) {
     this.modules.delete(moduleName);
+    this.commandsPerModule.delete(moduleName);
+
+    if (!this.destroying) {
+      this.updateCommandsList();
+    }
   }
 
   emit<E extends keyof Event>(e: E, event: Event[E]) {
@@ -60,13 +74,21 @@ export class GlobalContext {
     });
   }
 
-  registerCommand(builder: SlashCommandBuilder) {
-    this.commands.push(builder);
+  registerCommand(moduleName: string, command: SlashCommandBuilder) {
+    const commandsList = this.commandsPerModule.get(moduleName);
+    if (commandsList) {
+      commandsList.push(command);
+      return;
+    }
+
+    this.commandsPerModule.set(moduleName, [command]);
   }
 
-  private async performCommandsRegistration() {
+  private async updateCommandsList() {
     const payload: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
-    this.commands.forEach(c => payload.push(c.toJSON()));
+    this.commandsPerModule.forEach((commands, _) => {
+      commands.forEach(c => payload.push(c.toJSON()));
+    });
 
     const rest = new REST().setToken(config.DISCORD_TOKEN);
     await rest.put(Routes.applicationCommands(config.DISCORD_APP_ID), { body: payload });
