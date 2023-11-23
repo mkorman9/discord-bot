@@ -3,7 +3,7 @@ FROM node:18 AS builder
 COPY . .
 RUN npm ci && npm run build
 
-FROM node:18
+FROM node:18-slim
 
 COPY --chown=node:node --from=builder dist/ /runtime/dist/
 COPY --chown=node:node --from=builder package.json /runtime
