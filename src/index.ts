@@ -10,11 +10,12 @@ const modulesPath = './modules';
 const moduleLoader = new ModuleLoader();
 
 const resolveModules = async () => {
-  const files = await readdir(join(__dirname, modulesPath))
-    .then(files => files.filter(f => f.endsWith('.js')))
-    .then(files => files.map(f => `${modulesPath}/${f.split('.')[0]}`))
-    .then(files => files.map(f => import(f)));
-  const modules = await Promise.all(files);
+  const modules = await Promise.all(
+    await readdir(join(__dirname, modulesPath))
+      .then(files => files.filter(f => f.endsWith('.js')))
+      .then(files => files.map(f => `${modulesPath}/${f.split('.')[0]}`))
+      .then(files => files.map(f => import(f)))
+  );
   return modules.map(m => m.default as ModuleDefinition);
 };
 
