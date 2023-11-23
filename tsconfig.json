@@ -5,6 +5,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
     "esModuleInterop": true,
     "strict": true,
     "rootDir": "src",
