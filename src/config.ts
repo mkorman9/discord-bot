@@ -1,12 +1,23 @@
 import 'dotenv/config';
+import {z} from 'zod';
 
-const throwError = (message: string): never => {
-  console.log(`🚫 ${message}`);
-  process.exit(1);
-};
+const ConfigSchema = z.object({
+  DISCORD_APP_ID: z.string(),
+  DISCORD_TOKEN: z.string(),
+  IGNORED_MODULES: z.string().optional().transform(
+    v => new Set<string>(v ? v.split(',') : [])
+  )
+});
 
-export default {
-  DISCORD_APP_ID: process.env.DISCORD_APP_ID || throwError('DISCORD_APP_ID needs to be present'),
-  DISCORD_TOKEN: process.env.DISCORD_TOKEN || throwError('DISCORD_TOKEN needs to be present'),
-  IGNORED_MODULES: new Set<string>(process.env.IGNORED_MODULES?.split(',') || [])
-};
+type Config = z.infer<typeof ConfigSchema>;
+
+function loadConfig(): Config {
+  try {
+    return ConfigSchema.parse(process.env);
+  } catch (e) {
+    console.log(`🚫 Configuration loading has failed: ${e}`);
+    process.exit(1);
+  }
+}
+
+export default loadConfig();
