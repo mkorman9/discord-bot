@@ -73,7 +73,7 @@ export class ModuleLoader {
 
     if (!this.destroying) {
       this.updateCommandsList()
-        .catch(e => console.error(`Failed to unregister commands of module ${moduleName}: ${e.stack}`));
+        .catch(e => console.log(`🚫 Failed to unregister commands of module ${moduleName}: ${e.stack}`));
     }
 
     m?.emit('unload', {});

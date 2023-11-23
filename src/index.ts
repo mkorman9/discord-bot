@@ -19,11 +19,14 @@ const resolveModules = async () => {
 };
 
 process.on('exit', () => {
-  console.log('Exiting');
   moduleLoader.destroy();
+  console.log('⛔ Application has been stopped');
 });
 
 resolveModules()
   .then(modules => moduleLoader.init(modules))
-  .then(() => console.log('Application has started successfully'))
-  .catch(e => console.error(`Failed to start the application: ${e.stack}`));
+  .then(() => console.log('✅ Application has started successfully'))
+  .catch(e => {
+    console.log(`🚫 Failed to start the application: ${e.stack}`);
+    process.exit(1);
+  });

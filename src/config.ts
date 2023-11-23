@@ -1,7 +1,8 @@
 import 'dotenv/config';
 
 const throwError = (message: string): never => {
-  throw new Error(message);
+  console.log(`🚫 ${message}`);
+  process.exit(1);
 };
 
 export default {

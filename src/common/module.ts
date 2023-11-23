@@ -45,9 +45,9 @@ export class Module extends EventEmitter {
   async load() {
     try {
       await this.loader.loadModule(this.name, this);
-      console.log(`Module ${this.name} loaded`);
+      console.log(`➡️ Module ${this.name} loaded`);
     } catch (e) {
-      console.error(`Failed to load module ${this.name}: ${e}`);
+      console.log(`🚫 Failed to load module ${this.name}: ${e}`);
     }
 
     this.cronTasks.forEach(t => t.start());
@@ -58,9 +58,9 @@ export class Module extends EventEmitter {
 
     try {
       this.loader.unloadModule(this.name);
-      console.log(`Module ${this.name} unloaded`);
+      console.log(`⬅️ Module ${this.name} unloaded`);
     } catch (e) {
-      console.error(`Failed to unload module ${this.name}: ${e}`);
+      console.log(`🚫 Failed to unload module ${this.name}: ${e}`);
     }
   }
 

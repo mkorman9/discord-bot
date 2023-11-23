@@ -23,7 +23,7 @@ export default declareModule('example_module', m => {
   });
 
   m.cron('*/5 * * * * *', () => {
-    console.log('Scheduled event');
+    console.log('scheduled event');
   });
 
   m.command(
