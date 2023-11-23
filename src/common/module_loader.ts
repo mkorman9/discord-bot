@@ -47,11 +47,9 @@ export class ModuleLoader {
     this.initialized = true;
   }
 
-  async destroy() {
+  destroy() {
     this.destroying = true;
-    await Promise.all(
-      Array.from(this.modules.values()).map(async m => await m.unload())
-    );
+    this.modules.forEach(m => m.unload());
     this.client.destroy();
   }
 
@@ -63,12 +61,13 @@ export class ModuleLoader {
     }
   }
 
-  async unloadModule(moduleName: string) {
+  unloadModule(moduleName: string) {
     this.modules.delete(moduleName);
     this.commandsPerModule.delete(moduleName);
 
     if (!this.destroying) {
-      await this.updateCommandsList();
+      this.updateCommandsList()
+        .catch(e => console.error(`Failed to unregister commands of module ${moduleName}: ${e.stack}`));
     }
   }
 

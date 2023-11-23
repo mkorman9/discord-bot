@@ -53,11 +53,11 @@ export class Module extends EventEmitter {
     this.cronTasks.forEach(t => t.start());
   }
 
-  async unload() {
+  unload() {
     this.cronTasks.forEach(t => t.stop());
 
     try {
-      await this.loader.unloadModule(this.name);
+      this.loader.unloadModule(this.name);
       console.log(`Module ${this.name} unloaded`);
     } catch (e) {
       console.error(`Failed to unload module ${this.name}: ${e}`);
