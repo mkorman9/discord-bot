@@ -19,7 +19,13 @@ export class ModuleLoader {
   private initialized = false;
   private destroying = false;
 
-  async init(preloadModules: ModuleDefinition[]) {
+  async init(modules: ModuleDefinition[]) {
+    await Promise.all(
+      modules
+        .filter(m => !config.IGNORED_MODULES.has(m.name))
+        .map(async m => await m.load(this))
+    );
+
     this.client.on('ready', () => {
       this.emit('ready', {});
     });
@@ -39,11 +45,6 @@ export class ModuleLoader {
     });
 
     await this.client.login(config.DISCORD_TOKEN);
-    await Promise.all(
-      preloadModules
-        .filter(m => !config.IGNORED_MODULES.has(m.name))
-        .map(async m => await m.load(this))
-    );
     await this.updateCommandsList();
 
     this.initialized = true;
