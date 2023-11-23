@@ -9,9 +9,9 @@ const modules = [
 ];
 const moduleLoader = new ModuleLoader();
 
-process.on('exit', () => {
+process.on('exit', async () => {
   console.log('Exiting');
-  moduleLoader.destroy();
+  await moduleLoader.destroy();
 });
 
 Promise.all(modules.map(m => import(m)))

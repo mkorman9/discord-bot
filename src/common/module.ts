@@ -6,7 +6,7 @@ import {Event} from './events';
 
 export type ModuleDefinition = {
   name: string;
-  load: (loader: ModuleLoader) => void;
+  load: (loader: ModuleLoader) => Promise<void>;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
@@ -42,18 +42,26 @@ export class Module extends EventEmitter {
     this.client = loader.client;
   }
 
-  load() {
-    console.log(`Module ${this.name} loaded`);
+  async load() {
+    try {
+      await this.loader.loadModule(this.name, this);
+      console.log(`Module ${this.name} loaded`);
+    } catch (e) {
+      console.error(`Failed to load module ${this.name}: ${e}`);
+    }
 
-    this.loader.loadModule(this.name, this);
     this.cronTasks.forEach(t => t.start());
   }
 
-  unload() {
-    console.log(`Module ${this.name} unloaded`);
-
-    this.loader.unloadModule(this.name);
+  async unload() {
     this.cronTasks.forEach(t => t.stop());
+
+    try {
+      await this.loader.unloadModule(this.name);
+      console.log(`Module ${this.name} unloaded`);
+    } catch (e) {
+      console.error(`Failed to unload module ${this.name}: ${e}`);
+    }
   }
 
   emitGlobally<E extends keyof Event>(e: E, event: Event[E]) {
@@ -92,10 +100,10 @@ export class Module extends EventEmitter {
 export const declareModule = (moduleName: string, func: (m: Module) => void): ModuleDefinition => {
   return {
     name: moduleName,
-    load: (loader: ModuleLoader) => {
+    load: async (loader: ModuleLoader) => {
       const m = new Module(moduleName, loader);
       func(m);
-      m.load();
+      await m.load();
     }
   };
 };

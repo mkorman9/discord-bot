@@ -39,32 +39,36 @@ export class ModuleLoader {
     });
 
     await this.client.login(config.DISCORD_TOKEN);
-    preloadModules.forEach(m => m.load(this));
+    await Promise.all(
+      preloadModules.map(async m => await m.load(this))
+    );
     await this.updateCommandsList();
 
     this.initialized = true;
   }
 
-  destroy() {
+  async destroy() {
     this.destroying = true;
-    this.modules.forEach(m => m.unload());
+    await Promise.all(
+      Array.from(this.modules.values()).map(async m => await m.unload())
+    );
     this.client.destroy();
   }
 
-  loadModule(moduleName: string, m: Module) {
+  async loadModule(moduleName: string, m: Module) {
     this.modules.set(moduleName, m);
 
     if (this.initialized) {
-      this.updateCommandsList();
+      await this.updateCommandsList();
     }
   }
 
-  unloadModule(moduleName: string) {
+  async unloadModule(moduleName: string) {
     this.modules.delete(moduleName);
     this.commandsPerModule.delete(moduleName);
 
     if (!this.destroying) {
-      this.updateCommandsList();
+      await this.updateCommandsList();
     }
   }
 
