@@ -1,8 +1,8 @@
 import './hooks';
 import './config';
 
-import {ModuleLoader} from './modules/common/module_loader';
-import {ModuleDefinition} from './modules/common/module';
+import {ModuleLoader} from './common/module_loader';
+import {ModuleDefinition} from './common/module';
 
 const modules = [
   './modules/example_module'
@@ -10,6 +10,7 @@ const modules = [
 const moduleLoader = new ModuleLoader();
 
 process.on('exit', () => {
+  console.log('Exiting');
   moduleLoader.destroy();
 });
 

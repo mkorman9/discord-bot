@@ -7,7 +7,7 @@ import {
   SlashCommandBuilder
 } from 'discord.js';
 import {createClient} from './discord_client';
-import config from '../../config';
+import config from '../config';
 import {Event} from './events';
 import {Module, ModuleDefinition} from './module';
 

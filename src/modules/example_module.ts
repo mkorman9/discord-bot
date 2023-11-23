@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { declareModule } from './common/module';
+import { declareModule } from '../common/module';
 
 export default declareModule('example_module', m => {
   m.on('ready', () => {
