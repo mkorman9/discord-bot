@@ -2,8 +2,16 @@ import { SlashCommandBuilder } from 'discord.js';
 import { declareModule } from '../common/module';
 
 export default declareModule('example_module', m => {
+  m.on('load', () => {
+    console.log('load');
+  });
+
+  m.on('unload', () => {
+    console.log('unload');
+  });
+
   m.on('ready', () => {
-    console.log('ready!');
+    console.log('ready');
   });
 
   m.on('guildMessage', message => {

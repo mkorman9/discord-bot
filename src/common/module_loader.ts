@@ -59,9 +59,13 @@ export class ModuleLoader {
     if (this.initialized) {
       await this.updateCommandsList();
     }
+
+    m.emit('load', {});
   }
 
   unloadModule(moduleName: string) {
+    const m = this.modules.get(moduleName);
+
     this.modules.delete(moduleName);
     this.commandsPerModule.delete(moduleName);
 
@@ -69,6 +73,8 @@ export class ModuleLoader {
       this.updateCommandsList()
         .catch(e => console.error(`Failed to unregister commands of module ${moduleName}: ${e.stack}`));
     }
+
+    m?.emit('unload', {});
   }
 
   emit<E extends keyof Event>(e: E, event: Event[E]) {
