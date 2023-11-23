@@ -1,7 +1,7 @@
 import { CacheType, Client, CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { EventEmitter } from 'events';
 import cron, { ScheduledTask } from 'node-cron';
-import client from '../../providers/discord_client';
+import client from './discord_client';
 import globalContext from './global_context';
 import { Event } from './events';
 

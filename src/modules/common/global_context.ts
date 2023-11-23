@@ -7,7 +7,7 @@ import {
   Routes,
   SlashCommandBuilder
 } from 'discord.js';
-import client from '../../providers/discord_client';
+import client from './discord_client';
 import config from '../../config';
 import { Event } from './events';
 import { Module } from './module';
