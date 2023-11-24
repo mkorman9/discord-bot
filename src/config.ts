@@ -9,15 +9,11 @@ const ConfigSchema = z.object({
   )
 });
 
-type Config = z.infer<typeof ConfigSchema>;
-
-function loadConfig(): Config {
+export default (() => {
   try {
     return ConfigSchema.parse(process.env);
   } catch (e) {
     console.log(`🚫 Configuration loading has failed: ${e}`);
     process.exit(1);
   }
-}
-
-export default loadConfig();
+})();
