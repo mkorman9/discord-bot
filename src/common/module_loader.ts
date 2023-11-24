@@ -8,7 +8,6 @@ import {
   Routes,
   SlashCommandBuilder
 } from 'discord.js';
-import {createClient} from './discord_client';
 import config from '../config';
 import {Event} from './events';
 import {Module, ModuleDefinition} from './module';
@@ -29,7 +28,10 @@ export class ModuleLoader {
         .map(async m => await m.load(this))
     );
 
-    this.discordClient = createClient([...this.requestedIntents], [...this.requestedPartials]);
+    this.discordClient = new Client({
+      intents: [...this.requestedIntents],
+      partials: [...this.requestedPartials]
+    });
 
     this.discordClient.on('ready', () => {
       this.emit('ready', {});
