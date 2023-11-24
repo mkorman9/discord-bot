@@ -24,7 +24,7 @@ export default declareModule('example_module', m => {
       return;
     }
 
-    await message.reply(`hello from module: ${m.name}`);
+    await message.reply(`hello from module: ${m.name()}`);
   });
 
   m.cron('*/5 * * * * *', () => {

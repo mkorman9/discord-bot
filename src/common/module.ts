@@ -34,7 +34,7 @@ export class Module extends EventEmitter {
   private cronTasks: ScheduledTask[] = [];
 
   constructor(
-    public name: string,
+    private moduleName: string,
     private loader: ModuleLoader
   ) {
     super();
@@ -42,10 +42,10 @@ export class Module extends EventEmitter {
 
   async load() {
     try {
-      await this.loader.loadModule(this.name, this);
-      console.log(`➡️ Module ${this.name} loaded`);
+      await this.loader.loadModule(this.moduleName, this);
+      console.log(`➡️ Module ${this.moduleName} loaded`);
     } catch (e) {
-      console.log(`🚫 Failed to load module ${this.name}: ${e}`);
+      console.log(`🚫 Failed to load module ${this.moduleName}: ${e}`);
     }
 
     this.cronTasks.forEach(t => t.start());
@@ -55,11 +55,15 @@ export class Module extends EventEmitter {
     this.cronTasks.forEach(t => t.stop());
 
     try {
-      this.loader.unloadModule(this.name);
-      console.log(`⬅️ Module ${this.name} unloaded`);
+      this.loader.unloadModule(this.moduleName);
+      console.log(`⬅️ Module ${this.moduleName} unloaded`);
     } catch (e) {
-      console.log(`🚫 Failed to unload module ${this.name}: ${e}`);
+      console.log(`🚫 Failed to unload module ${this.moduleName}: ${e}`);
     }
+  }
+
+  name(): string {
+    return this.moduleName;
   }
 
   client(): Client {
@@ -95,7 +99,7 @@ export class Module extends EventEmitter {
     command: SlashCommandBuilder,
     handler: (interaction: CommandInteraction) => PromiseLike<void> | void
   ): Module {
-    this.loader.registerCommand(this.name, command);
+    this.loader.registerCommand(this.moduleName, command);
 
     this.on('command', interaction => {
       if (interaction.commandName === command.name) {
