@@ -1,13 +1,8 @@
-import {Client, GatewayIntentBits, Partials} from 'discord.js';
+import {Client, Partials} from 'discord.js';
 
-export const createClient = () => {
+export const createClient = (intents: number[], partials: Partials[]) => {
   return new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.GuildVoiceStates,
-      GatewayIntentBits.DirectMessages
-    ],
-    partials: [Partials.Channel]
+    intents: intents,
+    partials: partials
   });
 };

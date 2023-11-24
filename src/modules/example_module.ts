@@ -1,7 +1,12 @@
-import { SlashCommandBuilder } from 'discord.js';
-import { declareModule } from '../common/module';
+import {GatewayIntentBits, SlashCommandBuilder} from 'discord.js';
+import {declareModule} from '../common/module';
 
 export default declareModule('example_module', m => {
+  m.intents(
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages
+  );
+
   m.on('load', () => {
     console.log('load');
   });

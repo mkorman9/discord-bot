@@ -1,4 +1,4 @@
-import {Client, CommandInteraction, SlashCommandBuilder} from 'discord.js';
+import {Client, CommandInteraction, Partials, SlashCommandBuilder} from 'discord.js';
 import {EventEmitter} from 'events';
 import cron, {ScheduledTask} from 'node-cron';
 import {ModuleLoader} from './module_loader';
@@ -32,14 +32,12 @@ export interface Module {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Module extends EventEmitter {
   private cronTasks: ScheduledTask[] = [];
-  protected client: Client;
 
   constructor(
     public name: string,
     protected loader: ModuleLoader
   ) {
     super();
-    this.client = loader.client;
   }
 
   async load() {
@@ -62,6 +60,18 @@ export class Module extends EventEmitter {
     } catch (e) {
       console.log(`🚫 Failed to unload module ${this.name}: ${e}`);
     }
+  }
+
+  client(): Client {
+    return this.loader.client();
+  }
+
+  intents(...intents: number[]) {
+    this.loader.requestIntents(intents);
+  }
+
+  partials(...partials: Partials[]) {
+    this.loader.requestPartials(partials);
   }
 
   emitGlobally<E extends keyof Event>(e: E, event: Event[E]) {

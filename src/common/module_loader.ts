@@ -1,6 +1,8 @@
 import {
   ChannelType,
+  Client,
   Message,
+  Partials,
   REST,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   Routes,
@@ -12,8 +14,9 @@ import {Event} from './events';
 import {Module, ModuleDefinition} from './module';
 
 export class ModuleLoader {
-  public client = createClient();
-
+  private discordClient: Client | undefined;
+  private requestedIntents = new Set<number>();
+  private requestedPartials = new Set<Partials>();
   private modules = new Map<string, Module>();
   private commandsPerModule = new Map<string, SlashCommandBuilder[]>();
   private initialized = false;
@@ -26,11 +29,13 @@ export class ModuleLoader {
         .map(async m => await m.load(this))
     );
 
-    this.client.on('ready', () => {
+    this.discordClient = createClient([...this.requestedIntents], [...this.requestedPartials]);
+
+    this.discordClient.on('ready', () => {
       this.emit('ready', {});
     });
 
-    this.client.on('messageCreate', (msg: Message) => {
+    this.discordClient.on('messageCreate', (msg: Message) => {
       if (msg.channel.type === ChannelType.DM) {
         this.emit('directMessage', msg);
       } else if (msg.channel.type === ChannelType.GuildText) {
@@ -38,13 +43,13 @@ export class ModuleLoader {
       }
     });
 
-    this.client.on('interactionCreate', interaction => {
+    this.discordClient.on('interactionCreate', interaction => {
       if (interaction.isCommand()) {
         this.emit('command', interaction);
       }
     });
 
-    await this.client.login(config.DISCORD_TOKEN);
+    await this.discordClient.login(config.DISCORD_TOKEN);
     await this.updateCommandsList();
 
     this.initialized = true;
@@ -53,7 +58,7 @@ export class ModuleLoader {
   destroy() {
     this.destroying = true;
     this.modules.forEach(m => m.unload());
-    this.client.destroy();
+    this.discordClient?.destroy();
   }
 
   async loadModule(moduleName: string, m: Module) {
@@ -80,6 +85,14 @@ export class ModuleLoader {
     m?.emit('unload', {});
   }
 
+  client(): Client {
+    if (!this.client) {
+      throw new Error('Client is undefined');
+    }
+
+    return this.discordClient!;
+  }
+
   emit<E extends keyof Event>(e: E, event: Event[E]) {
     this.modules.forEach(m => {
       m.emit(e, event);
@@ -94,6 +107,14 @@ export class ModuleLoader {
     }
 
     this.commandsPerModule.set(moduleName, [command]);
+  }
+
+  requestIntents(intents: number[]) {
+    intents.forEach(i => this.requestedIntents.add(i));
+  }
+
+  requestPartials(partials: Partials[]) {
+    partials.forEach(p => this.requestedPartials.add(p));
   }
 
   private async updateCommandsList() {
