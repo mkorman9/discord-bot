@@ -35,7 +35,7 @@ export class Module extends EventEmitter {
 
   constructor(
     public name: string,
-    protected loader: ModuleLoader
+    private loader: ModuleLoader
   ) {
     super();
   }
