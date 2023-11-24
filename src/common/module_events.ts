@@ -2,7 +2,7 @@ import {CommandInteraction, Message} from 'discord.js';
 
 type Empty = Record<string, never>;
 
-export interface Event {
+export interface ModuleEvent {
   load: Empty;
   unload: Empty;
   ready: Empty;

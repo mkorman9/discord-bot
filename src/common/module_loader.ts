@@ -9,7 +9,7 @@ import {
   SlashCommandBuilder
 } from 'discord.js';
 import config from '../config';
-import {Event} from './events';
+import {ModuleEvent} from './module_events';
 import {Module, ModuleDefinition} from './module';
 
 export class ModuleLoader {
@@ -95,7 +95,7 @@ export class ModuleLoader {
     return this.discordClient!;
   }
 
-  emit<E extends keyof Event>(e: E, event: Event[E]) {
+  emit<E extends keyof ModuleEvent>(e: E, event: ModuleEvent[E]) {
     this.modules.forEach(m => {
       m.emit(e, event);
     });

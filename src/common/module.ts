@@ -1,8 +1,8 @@
 import {Client, CommandInteraction, Partials, SlashCommandBuilder} from 'discord.js';
-import {EventEmitter} from 'events';
+import {EventEmitter} from 'node:events';
 import cron, {ScheduledTask} from 'node-cron';
 import {ModuleLoader} from './module_loader';
-import {Event} from './events';
+import {ModuleEvent} from './module_events';
 
 export type ModuleDefinition = {
   name: string;
@@ -11,21 +11,21 @@ export type ModuleDefinition = {
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export interface Module {
-  on<E extends keyof Event>(
+  on<E extends keyof ModuleEvent>(
     e: E,
-    handler: (event: Event[E]) => void | PromiseLike<void>
+    handler: (event: ModuleEvent[E]) => void | PromiseLike<void>
   ): this;
-  once<E extends keyof Event>(
+  once<E extends keyof ModuleEvent>(
     e: E,
-    handler: (event: Event[E]) => void | PromiseLike<void>
+    handler: (event: ModuleEvent[E]) => void | PromiseLike<void>
   ): this;
-  off<E extends keyof Event>(
+  off<E extends keyof ModuleEvent>(
     e: E,
-    handler: (event: Event[E]) => void | PromiseLike<void>
+    handler: (event: ModuleEvent[E]) => void | PromiseLike<void>
   ): this;
-  emit<E extends keyof Event>(
+  emit<E extends keyof ModuleEvent>(
     e: E,
-    event: Event[E]
+    event: ModuleEvent[E]
   ): boolean;
 }
 
@@ -74,7 +74,7 @@ export class Module extends EventEmitter {
     this.loader.requestPartials(partials);
   }
 
-  emitGlobally<E extends keyof Event>(e: E, event: Event[E]) {
+  emitGlobally<E extends keyof ModuleEvent>(e: E, event: ModuleEvent[E]) {
     this.loader.emit(e, event);
   }
 
