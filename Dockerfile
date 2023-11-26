@@ -15,4 +15,4 @@ ENV NODE_ENV=production
 
 RUN npm ci --omit=dev
 
-CMD [ "npm", "run", "exec" ]
+CMD [ "npm", "run", "--silent", "serve" ]
