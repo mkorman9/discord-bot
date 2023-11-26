@@ -32,12 +32,20 @@ export class Bot {
       partials: [...this.requestedPartials]
     });
 
-    this.discordClient.on('ready', () => {
+    this.registerClientEvents();
+    await this.discordClient.login(config.DISCORD_TOKEN);
+    await this.updateCommandsList();
+
+    this.initialized = true;
+  }
+
+  private registerClientEvents() {
+    this.discordClient?.on('ready', () => {
       this.emit('ready', {});
       console.log('✅ Bot is ready');
     });
 
-    this.discordClient.on('messageCreate', (msg: Message) => {
+    this.discordClient?.on('messageCreate', (msg: Message) => {
       if (msg.channel.type === ChannelType.DM) {
         this.emit('directMessage', msg);
       } else if (msg.channel.type === ChannelType.GuildText) {
@@ -45,16 +53,11 @@ export class Bot {
       }
     });
 
-    this.discordClient.on('interactionCreate', interaction => {
+    this.discordClient?.on('interactionCreate', interaction => {
       if (interaction.isCommand()) {
         this.emit('command', interaction);
       }
     });
-
-    await this.discordClient.login(config.DISCORD_TOKEN);
-    await this.updateCommandsList();
-
-    this.initialized = true;
   }
 
   destroy() {
