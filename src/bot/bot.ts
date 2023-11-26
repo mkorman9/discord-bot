@@ -9,10 +9,9 @@ import {
   SlashCommandBuilder
 } from 'discord.js';
 import config from '../config';
-import {ModuleEvent} from './module_events';
-import {Module, ModuleDefinition} from './module';
+import {Module, ModuleDefinition, ModuleEvent} from './module';
 
-export class ModuleLoader {
+export class Bot {
   private discordClient: Client | undefined;
   private requestedIntents = new Set<number>();
   private requestedPartials = new Set<Partials>();
@@ -35,6 +34,7 @@ export class ModuleLoader {
 
     this.discordClient.on('ready', () => {
       this.emit('ready', {});
+      console.log('✅ Bot is ready');
     });
 
     this.discordClient.on('messageCreate', (msg: Message) => {
@@ -61,6 +61,8 @@ export class ModuleLoader {
     this.destroying = true;
     this.modules.forEach(m => m.unload());
     this.discordClient?.destroy();
+
+    console.log('⛔ Bot has been stopped');
   }
 
   async loadModule(moduleName: string, m: Module) {

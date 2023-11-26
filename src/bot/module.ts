@@ -1,12 +1,22 @@
-import {Client, CommandInteraction, Partials, SlashCommandBuilder} from 'discord.js';
+import {Client, CommandInteraction, Message, Partials, SlashCommandBuilder} from 'discord.js';
 import {EventEmitter} from 'node:events';
 import cron, {ScheduledTask} from 'node-cron';
-import {ModuleLoader} from './module_loader';
-import {ModuleEvent} from './module_events';
+import {Bot} from './bot';
+
+type EmptyEvent = Record<string, never>;
+
+export interface ModuleEvent {
+  load: EmptyEvent;
+  unload: EmptyEvent;
+  ready: EmptyEvent;
+  directMessage: Message;
+  guildMessage: Message;
+  command: CommandInteraction;
+}
 
 export type ModuleDefinition = {
   name: string;
-  load: (loader: ModuleLoader) => Promise<void>;
+  load: (bot: Bot) => Promise<void>;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
@@ -35,27 +45,29 @@ export class Module extends EventEmitter {
 
   constructor(
     private moduleName: string,
-    private loader: ModuleLoader
+    private bot: Bot
   ) {
     super();
   }
 
   async load() {
     try {
-      await this.loader.loadModule(this.moduleName, this);
+      await this.bot.loadModule(this.moduleName, this);
       console.log(`➡️ Module ${this.moduleName} loaded`);
     } catch (e) {
       console.log(`🚫 Failed to load module ${this.moduleName}: ${e}`);
     }
 
-    this.cronTasks.forEach(t => t.start());
+    this.on('ready', () => {
+      this.cronTasks.forEach(t => t.start());
+    });
   }
 
   unload() {
     this.cronTasks.forEach(t => t.stop());
 
     try {
-      this.loader.unloadModule(this.moduleName);
+      this.bot.unloadModule(this.moduleName);
       console.log(`⬅️ Module ${this.moduleName} unloaded`);
     } catch (e) {
       console.log(`🚫 Failed to unload module ${this.moduleName}: ${e}`);
@@ -67,19 +79,19 @@ export class Module extends EventEmitter {
   }
 
   client(): Client {
-    return this.loader.client();
+    return this.bot.client();
   }
 
   intents(...intents: number[]) {
-    this.loader.requestIntents(intents);
+    this.bot.requestIntents(intents);
   }
 
   partials(...partials: Partials[]) {
-    this.loader.requestPartials(partials);
+    this.bot.requestPartials(partials);
   }
 
   emitGlobally<E extends keyof ModuleEvent>(e: E, event: ModuleEvent[E]) {
-    this.loader.emit(e, event);
+    this.bot.emit(e, event);
   }
 
   cron(expression: string, handler: () => PromiseLike<void> | void) {
@@ -99,7 +111,7 @@ export class Module extends EventEmitter {
     command: SlashCommandBuilder,
     handler: (interaction: CommandInteraction) => PromiseLike<void> | void
   ): Module {
-    this.loader.registerCommand(this.moduleName, command);
+    this.bot.registerCommand(this.moduleName, command);
 
     this.on('command', interaction => {
       if (interaction.commandName === command.name) {
@@ -114,8 +126,8 @@ export class Module extends EventEmitter {
 export const declareModule = (moduleName: string, func: (m: Module) => void): ModuleDefinition => {
   return {
     name: moduleName,
-    load: async (loader: ModuleLoader) => {
-      const m = new Module(moduleName, loader);
+    load: async (bot: Bot) => {
+      const m = new Module(moduleName, bot);
       func(m);
       await m.load();
     }

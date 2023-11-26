@@ -1,5 +1,5 @@
 import {GatewayIntentBits, SlashCommandBuilder} from 'discord.js';
-import {declareModule} from '../common/module';
+import {declareModule} from '../bot/module';
 
 export default declareModule('example_module', m => {
   m.intents(

@@ -3,11 +3,15 @@ import './config';
 
 import {readdir} from 'fs/promises';
 import {join} from 'path';
-import {ModuleLoader} from './common/module_loader';
-import {ModuleDefinition} from './common/module';
+import {Bot} from './bot/bot';
+import {ModuleDefinition} from './bot/module';
 
 const modulesPath = './modules';
-const moduleLoader = new ModuleLoader();
+const bot = new Bot();
+
+process.on('exit', () => {
+  bot.destroy();
+});
 
 const resolveModules = async () => {
   const modules = await Promise.all(
@@ -19,15 +23,9 @@ const resolveModules = async () => {
   return modules.map(m => m.default as ModuleDefinition);
 };
 
-process.on('exit', () => {
-  moduleLoader.destroy();
-  console.log('⛔ Application has been stopped');
-});
-
 resolveModules()
-  .then(modules => moduleLoader.init(modules))
-  .then(() => console.log('✅ Application has started successfully'))
+  .then(modules => bot.init(modules))
   .catch(e => {
-    console.log(`🚫 Failed to start the application: ${e.stack}`);
+    console.log(`🚫 Failed to initialize the bot: ${e.stack}`);
     process.exit(1);
   });
