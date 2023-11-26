@@ -5,7 +5,7 @@ RUN npm ci && npm run build
 
 FROM node:18-slim
 
-COPY --chown=node:node --from=builder dist/ /runtime/dist/
+COPY --chown=node:node --from=builder lib/ /runtime/lib/
 COPY --chown=node:node --from=builder package.json /runtime
 COPY --chown=node:node --from=builder package-lock.json /runtime
 
