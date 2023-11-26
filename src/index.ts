@@ -4,7 +4,7 @@ import './config';
 import {readdir} from 'fs/promises';
 import {join} from 'path';
 import {Bot} from './bot/bot';
-import {ModuleDefinition} from './bot/module';
+import {ModuleDeclaration} from './bot/module';
 
 const modulesPath = './modules';
 const bot = new Bot();
@@ -20,7 +20,7 @@ const resolveModules = async () => {
       .then(files => files.map(f => `${modulesPath}/${f.split('.')[0]}`))
       .then(files => files.map(f => import(f)))
   );
-  return modules.map(m => m.default as ModuleDefinition);
+  return modules.map(m => m.default as ModuleDeclaration);
 };
 
 resolveModules()

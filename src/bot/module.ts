@@ -14,7 +14,7 @@ export interface ModuleEvent {
   command: CommandInteraction;
 }
 
-export type ModuleDefinition = {
+export type ModuleDeclaration = {
   name: string;
   load: (bot: Bot) => Promise<void>;
 };
@@ -123,7 +123,7 @@ export class Module extends EventEmitter {
   }
 }
 
-export const declareModule = (moduleName: string, func: (m: Module) => void): ModuleDefinition => {
+export const declareModule = (moduleName: string, func: (m: Module) => void): ModuleDeclaration => {
   return {
     name: moduleName,
     load: async (bot: Bot) => {

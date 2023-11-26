@@ -9,7 +9,7 @@ import {
   SlashCommandBuilder
 } from 'discord.js';
 import config from '../config';
-import {Module, ModuleDefinition, ModuleEvent} from './module';
+import {Module, ModuleDeclaration, ModuleEvent} from './module';
 
 export class Bot {
   private discordClient: Client | undefined;
@@ -20,7 +20,7 @@ export class Bot {
   private initialized = false;
   private destroying = false;
 
-  async init(modules: ModuleDefinition[]) {
+  async init(modules: ModuleDeclaration[]) {
     await Promise.all(
       modules
         .filter(m => !config.IGNORED_MODULES.has(m.name))
