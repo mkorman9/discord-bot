@@ -9,9 +9,8 @@ export default declareModule('example_module', m => {
 
   m.template('moduleResponse', {
     'en-US': `
-      Hello,
-      This is a message from module *{{ moduleName }}*.
-      Multiline string should be handled properly
+      This is a response from module *{{ moduleName }}*.
+      Multiline string should be handled properly.
     `
   });
 
