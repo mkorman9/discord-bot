@@ -17,10 +17,10 @@ export class Bot {
   private requestedPartials = new Set<Partials>();
   private modules = new Map<string, Module>();
   private commandsPerModule = new Map<string, SlashCommandBuilder[]>();
-  private initialized = false;
-  private destroying = false;
+  private started = false;
+  private stopping = false;
 
-  async init(modules: ModuleDeclaration[]) {
+  async start(modules: ModuleDeclaration[]) {
     await Promise.all(
       modules
         .filter(m => !config.IGNORED_MODULES.has(m.name))
@@ -36,7 +36,7 @@ export class Bot {
     await this.discordClient.login(config.DISCORD_TOKEN);
     await this.updateCommandsList();
 
-    this.initialized = true;
+    this.started = true;
   }
 
   private registerClientEvents() {
@@ -60,10 +60,16 @@ export class Bot {
     });
   }
 
-  destroy() {
-    this.destroying = true;
+  stop() {
+    this.stopping = true;
     this.modules.forEach(m => m.unload());
     this.discordClient?.destroy();
+
+    this.discordClient = undefined;
+    this.requestedIntents = new Set();
+    this.requestedPartials = new Set();
+    this.started = false;
+    this.stopping = false;
 
     console.log('⛔ Bot has been stopped');
   }
@@ -71,7 +77,7 @@ export class Bot {
   async loadModule(moduleName: string, m: Module) {
     this.modules.set(moduleName, m);
 
-    if (this.initialized) {
+    if (this.started) {
       await this.updateCommandsList();
     }
 
@@ -84,7 +90,7 @@ export class Bot {
     this.modules.delete(moduleName);
     this.commandsPerModule.delete(moduleName);
 
-    if (!this.destroying) {
+    if (!this.stopping) {
       this.updateCommandsList()
         .catch(e => console.log(`🚫 Failed to unregister commands of module ${moduleName}: ${e.stack}`));
     }
@@ -93,11 +99,11 @@ export class Bot {
   }
 
   client(): Client {
-    if (!this.client) {
+    if (!this.discordClient) {
       throw new Error('Client is undefined');
     }
 
-    return this.discordClient!;
+    return this.discordClient;
   }
 
   emit<E extends keyof ModuleEvent>(e: E, event: ModuleEvent[E]) {

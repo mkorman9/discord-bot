@@ -10,7 +10,7 @@ const modulesPath = './modules';
 const bot = new Bot();
 
 process.on('exit', () => {
-  bot.destroy();
+  bot.stop();
 });
 
 const resolveModules = async () => {
@@ -24,8 +24,8 @@ const resolveModules = async () => {
 };
 
 resolveModules()
-  .then(modules => bot.init(modules))
+  .then(modules => bot.start(modules))
   .catch(e => {
-    console.log(`🚫 Failed to initialize the bot: ${e.stack}`);
+    console.log(`🚫 Failed to start the bot: ${e.stack}`);
     process.exit(1);
   });
