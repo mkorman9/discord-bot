@@ -52,10 +52,11 @@ export class Bot {
     this.stopping = false;
   }
 
-  async loadModule(moduleName: string, m: Module) {
-    this.modules.set(moduleName, m);
+  async loadModule(m: Module) {
+    this.modules.set(m.name(), m);
 
     if (this.started) {
+      m._registerListeners();
       await this.updateCommandsList();
     }
   }

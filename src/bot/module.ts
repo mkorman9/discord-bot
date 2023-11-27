@@ -20,7 +20,7 @@ export class Module {
 
   async load() {
     try {
-      await this.bot.loadModule(this.moduleName, this);
+      await this.bot.loadModule(this);
       console.log(`➡️ Module ${this.moduleName} loaded`);
     } catch (e) {
       console.log(`🚫 Failed to load module ${this.moduleName}: ${e}`);
@@ -82,10 +82,10 @@ export class Module {
     this.bot.client().emit(event, ...args);
   }
 
-  cron(expression: string, handler: () => PromiseLike<void> | void) {
+  cron(expression: string, listener: () => Awaitable<void>) {
     const task = cron.schedule(
       expression,
-      handler,
+      listener,
       {
         scheduled: false,
         runOnInit: false
@@ -97,13 +97,13 @@ export class Module {
 
   command(
     command: SlashCommandBuilder,
-    handler: (interaction: CommandInteraction) => PromiseLike<void> | void
-  ): Module {
+    listener: (interaction: CommandInteraction) => Awaitable<void>
+  ): this {
     this.bot.registerCommand(this.moduleName, command);
 
     this.on('interactionCreate', interaction => {
       if (interaction.isCommand() && interaction.commandName === command.name) {
-        handler(interaction);
+        listener(interaction);
       }
     });
 
