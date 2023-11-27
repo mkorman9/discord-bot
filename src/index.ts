@@ -11,6 +11,7 @@ const bot = new Bot();
 
 process.on('exit', () => {
   bot.stop();
+  console.log('⛔ Bot has been stopped');
 });
 
 const resolveModules = async () => {

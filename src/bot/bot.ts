@@ -50,8 +50,6 @@ export class Bot {
     this.requestedPartials = new Set();
     this.started = false;
     this.stopping = false;
-
-    console.log('⛔ Bot has been stopped');
   }
 
   async loadModule(moduleName: string, m: Module) {
