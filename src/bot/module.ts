@@ -26,7 +26,7 @@ export class Module {
       console.log(`🚫 Failed to load module ${this.moduleName}: ${e}`);
     }
 
-    this.on('ready', () => {
+    this.once('ready', () => {
       this.cronTasks.forEach(t => t.start());
     });
   }
