@@ -25,6 +25,7 @@ const resolveModules = async () => {
 
 resolveModules()
   .then(modules => bot.start(modules))
+  .then(() => console.log('✅ Bot is ready'))
   .catch(e => {
     console.log(`🚫 Failed to start the bot: ${e.stack}`);
     process.exit(1);

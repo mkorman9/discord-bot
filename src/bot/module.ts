@@ -1,53 +1,21 @@
-import {Client, CommandInteraction, Message, Partials, SlashCommandBuilder} from 'discord.js';
-import {EventEmitter} from 'node:events';
+import {Awaitable, Client, ClientEvents, CommandInteraction, Partials, SlashCommandBuilder} from 'discord.js';
 import cron, {ScheduledTask} from 'node-cron';
 import {Bot} from './bot';
-
-type EmptyEvent = Record<string, never>;
-
-export interface ModuleEvent {
-  load: EmptyEvent;
-  unload: EmptyEvent;
-  ready: EmptyEvent;
-  directMessage: Message;
-  guildMessage: Message;
-  command: CommandInteraction;
-}
 
 export type ModuleDeclaration = {
   name: string;
   load: (bot: Bot) => Promise<void>;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
-export interface Module {
-  on<E extends keyof ModuleEvent>(
-    e: E,
-    handler: (event: ModuleEvent[E]) => void | PromiseLike<void>
-  ): this;
-  once<E extends keyof ModuleEvent>(
-    e: E,
-    handler: (event: ModuleEvent[E]) => void | PromiseLike<void>
-  ): this;
-  off<E extends keyof ModuleEvent>(
-    e: E,
-    handler: (event: ModuleEvent[E]) => void | PromiseLike<void>
-  ): this;
-  emit<E extends keyof ModuleEvent>(
-    e: E,
-    event: ModuleEvent[E]
-  ): boolean;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
-export class Module extends EventEmitter {
+export class Module {
   private cronTasks: ScheduledTask[] = [];
+  private listenersToRegister: (() => void)[] = [];
+  private listenersToUnregister: (() => void)[] = [];
 
   constructor(
     private moduleName: string,
     private bot: Bot
   ) {
-    super();
   }
 
   async load() {
@@ -65,6 +33,7 @@ export class Module extends EventEmitter {
 
   unload() {
     this.cronTasks.forEach(t => t.stop());
+    this.listenersToUnregister.forEach(l => l());
 
     try {
       this.bot.unloadModule(this.moduleName);
@@ -72,6 +41,11 @@ export class Module extends EventEmitter {
     } catch (e) {
       console.log(`🚫 Failed to unload module ${this.moduleName}: ${e}`);
     }
+  }
+
+  _registerListeners() {
+    this.listenersToRegister.forEach(l => l());
+    this.listenersToRegister = [];
   }
 
   name(): string {
@@ -90,8 +64,22 @@ export class Module extends EventEmitter {
     this.bot.requestPartials(partials);
   }
 
-  emitGlobally<E extends keyof ModuleEvent>(e: E, event: ModuleEvent[E]) {
-    this.bot.emit(e, event);
+  on<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>) {
+    this.listenersToRegister.push(() => this.bot.client().on(event, listener));
+    this.listenersToUnregister.push(() => this.off(event, listener));
+  }
+
+  once<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>) {
+    this.listenersToRegister.push(() => this.bot.client().once(event, listener));
+    this.listenersToUnregister.push(() => this.off(event, listener));
+  }
+
+  off<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>) {
+    this.bot.client().off(event, listener);
+  }
+
+  emit<E extends keyof ClientEvents>(event: E, ...args: ClientEvents[E]) {
+    this.bot.client().emit(event, ...args);
   }
 
   cron(expression: string, handler: () => PromiseLike<void> | void) {
@@ -113,8 +101,8 @@ export class Module extends EventEmitter {
   ): Module {
     this.bot.registerCommand(this.moduleName, command);
 
-    this.on('command', interaction => {
-      if (interaction.commandName === command.name) {
+    this.on('interactionCreate', interaction => {
+      if (interaction.isCommand() && interaction.commandName === command.name) {
         handler(interaction);
       }
     });

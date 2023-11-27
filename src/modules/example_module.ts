@@ -1,4 +1,4 @@
-import {GatewayIntentBits, SlashCommandBuilder} from 'discord.js';
+import {ChannelType, GatewayIntentBits, SlashCommandBuilder} from 'discord.js';
 import {declareModule} from '../bot/module';
 
 export default declareModule('example_module', m => {
@@ -7,20 +7,12 @@ export default declareModule('example_module', m => {
     GatewayIntentBits.GuildMessages
   );
 
-  m.on('load', () => {
-    console.log('load');
-  });
-
-  m.on('unload', () => {
-    console.log('unload');
-  });
-
   m.on('ready', () => {
     console.log('ready');
   });
 
-  m.on('guildMessage', async message => {
-    if (message.author.bot) {
+  m.on('messageCreate', async message => {
+    if (message.channel.type != ChannelType.GuildText || message.author.bot) {
       return;
     }
 

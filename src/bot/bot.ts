@@ -9,7 +9,7 @@ import {
   SlashCommandBuilder
 } from 'discord.js';
 import config from '../config';
-import {Module, ModuleDeclaration, ModuleEvent} from './module';
+import {Module, ModuleDeclaration} from './module';
 
 export class Bot {
   private discordClient: Client | undefined;
@@ -32,32 +32,12 @@ export class Bot {
       partials: [...this.requestedPartials]
     });
 
-    this.registerClientEvents();
+    this.modules.forEach(m => m._registerListeners());
+
     await this.discordClient.login(config.DISCORD_TOKEN);
     await this.updateCommandsList();
 
     this.started = true;
-  }
-
-  private registerClientEvents() {
-    this.client().on('ready', () => {
-      this.emit('ready', {});
-      console.log('✅ Bot is ready');
-    });
-
-    this.client().on('messageCreate', (msg: Message) => {
-      if (msg.channel.type === ChannelType.DM) {
-        this.emit('directMessage', msg);
-      } else if (msg.channel.type === ChannelType.GuildText) {
-        this.emit('guildMessage', msg);
-      }
-    });
-
-    this.client().on('interactionCreate', interaction => {
-      if (interaction.isCommand()) {
-        this.emit('command', interaction);
-      }
-    });
   }
 
   stop() {
@@ -80,8 +60,6 @@ export class Bot {
     if (this.started) {
       await this.updateCommandsList();
     }
-
-    m.emit('load', {});
   }
 
   unloadModule(moduleName: string) {
@@ -94,8 +72,6 @@ export class Bot {
       this.updateCommandsList()
         .catch(e => console.log(`🚫 Failed to unregister commands of module ${moduleName}: ${e.stack}`));
     }
-
-    m?.emit('unload', {});
   }
 
   client(): Client {
@@ -104,12 +80,6 @@ export class Bot {
     }
 
     return this.discordClient;
-  }
-
-  emit<E extends keyof ModuleEvent>(e: E, event: ModuleEvent[E]) {
-    this.modules.forEach(m => {
-      m.emit(e, event);
-    });
   }
 
   registerCommand(moduleName: string, command: SlashCommandBuilder) {
