@@ -118,11 +118,11 @@ export class Module {
   }
 }
 
-export const declareModule = (moduleName: string, init: (m: Module) => void): ModuleDeclaration => {
+export const declareModule = (name: string, init: (m: Module) => void): ModuleDeclaration => {
   return {
-    name: moduleName,
+    name,
     load: async (bot: Bot) => {
-      const m = new Module(moduleName, bot);
+      const m = new Module(name, bot);
       init(m);
       await m.load();
     }
