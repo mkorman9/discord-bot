@@ -10,7 +10,8 @@ const ConfigSchema = z.object({
   DISCORD_TOKEN: str(),
   IGNORED_MODULES: str().optional().transform(
     v => new Set<string>(v ? v.split(',') : [])
-  )
+  ),
+  BOT_LANGUAGE: str().default('en-US')
 });
 
 export default (() => {

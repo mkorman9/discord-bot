@@ -1,7 +1,5 @@
 import {
-  ChannelType,
   Client,
-  Message,
   Partials,
   REST,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
@@ -32,7 +30,7 @@ export class Bot {
       partials: [...this.requestedPartials]
     });
 
-    this.modules.forEach(m => m._registerListeners());
+    this.modules.forEach(m => m.start());
 
     await this.discordClient.login(config.DISCORD_TOKEN);
     await this.updateCommandsList();
@@ -56,7 +54,7 @@ export class Bot {
     this.modules.set(m.name(), m);
 
     if (this.started) {
-      m._registerListeners();
+      m.start();
       await this.updateCommandsList();
     }
   }

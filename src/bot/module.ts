@@ -1,6 +1,8 @@
 import {Awaitable, Client, ClientEvents, CommandInteraction, Partials, SlashCommandBuilder} from 'discord.js';
 import cron, {ScheduledTask} from 'node-cron';
 import {Bot} from './bot';
+import {TwingEnvironment, TwingLoaderArray} from 'twing';
+import config from '../config';
 
 export type ModuleDeclaration = {
   name: string;
@@ -8,9 +10,13 @@ export type ModuleDeclaration = {
 };
 
 export class Module {
+  private readonly DefaultTemplateLanguage = 'en-US';
+
   private cronTasks: ScheduledTask[] = [];
   private listenersToRegister: (() => void)[] = [];
   private listenersToUnregister: (() => void)[] = [];
+  private templates = new Map<string, string>();
+  private templateEngine: TwingEnvironment | undefined;
 
   constructor(
     private moduleName: string,
@@ -43,9 +49,13 @@ export class Module {
     }
   }
 
-  _registerListeners() {
+  start() {
     this.listenersToRegister.forEach(l => l());
     this.listenersToRegister = [];
+
+    this.templateEngine = new TwingEnvironment(
+      new TwingLoaderArray(Object.fromEntries(this.templates))
+    );
   }
 
   name(): string {
@@ -64,6 +74,29 @@ export class Module {
   partials(...partials: Partials[]): this {
     this.bot.requestPartials(partials);
     return this;
+  }
+
+  template(name: string, content: Record<string, string> | string) {
+    if (typeof content === 'string') {
+      this.templates.set(name, content.replace(/\n  +/g, '\n'));
+    } else {
+      const localized = content[config.BOT_LANGUAGE] || content[this.DefaultTemplateLanguage];
+      if (localized) {
+        this.template(name, localized);
+      }
+    }
+  }
+
+  async render(name: string, context: Record<string, unknown>): Promise<string> {
+    if (!this.templateEngine) {
+      throw new Error('Template engine not initialized');
+    }
+
+    if (!this.templates.has(name)) {
+      throw new Error('Template cannot be resolved');
+    }
+
+    return await this.templateEngine.render(name, context);
   }
 
   on<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>): this {

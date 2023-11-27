@@ -7,6 +7,20 @@ export default declareModule('example_module', m => {
     GatewayIntentBits.GuildMessages
   );
 
+  m.template('moduleResponse', {
+    'en-US': `
+      Hello,
+      This is a message from module *{{ moduleName }}*.
+      Multiline string should be handled properly
+    `
+  });
+
+  m.template('hello', {
+    'en-US': `
+      Hello!
+    `
+  });
+
   m.on('ready', () => {
     console.log('ready');
   });
@@ -16,7 +30,9 @@ export default declareModule('example_module', m => {
       return;
     }
 
-    await message.reply(`hello from module: ${m.name()}`);
+    await message.reply(await m.render('moduleResponse', {
+      moduleName: m.name()
+    }));
   });
 
   m.cron('*/5 * * * * *', () => {
@@ -28,7 +44,7 @@ export default declareModule('example_module', m => {
       .setName('hello')
       .setDescription('responds with hello'),
     async interaction => {
-      await interaction.reply('Hello!');
+      await interaction.reply(await m.render('hello', {}));
     }
   );
 });
