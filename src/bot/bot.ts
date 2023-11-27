@@ -62,8 +62,6 @@ export class Bot {
   }
 
   unloadModule(moduleName: string) {
-    const m = this.modules.get(moduleName);
-
     this.modules.delete(moduleName);
     this.commandsPerModule.delete(moduleName);
 
