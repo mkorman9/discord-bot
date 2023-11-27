@@ -40,12 +40,12 @@ export class Bot {
   }
 
   private registerClientEvents() {
-    this.discordClient?.on('ready', () => {
+    this.client().on('ready', () => {
       this.emit('ready', {});
       console.log('✅ Bot is ready');
     });
 
-    this.discordClient?.on('messageCreate', (msg: Message) => {
+    this.client().on('messageCreate', (msg: Message) => {
       if (msg.channel.type === ChannelType.DM) {
         this.emit('directMessage', msg);
       } else if (msg.channel.type === ChannelType.GuildText) {
@@ -53,7 +53,7 @@ export class Bot {
       }
     });
 
-    this.discordClient?.on('interactionCreate', interaction => {
+    this.client().on('interactionCreate', interaction => {
       if (interaction.isCommand()) {
         this.emit('command', interaction);
       }
