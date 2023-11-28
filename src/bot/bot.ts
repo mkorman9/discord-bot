@@ -18,20 +18,19 @@ export class Bot {
   private started = false;
   private stopping = false;
 
-  async start(modules: ModuleDeclaration[]) {
-    await Promise.all(
-      modules
-        .filter(m => !config.IGNORED_MODULES.has(m.name))
-        .map(async m => await m.load(this))
-    );
+  async start(moduleDeclarations: ModuleDeclaration[]) {
+    const modules = moduleDeclarations
+      .map(m => m(this))
+      .filter(m => !config.IGNORED_MODULES.has(m.name()));
 
     this.discordClient = new Client({
       intents: [...this.requestedIntents],
       partials: [...this.requestedPartials]
     });
 
-    this.modules.forEach(m => m.start());
-
+    await Promise.all(
+      modules.map(m => m.load())
+    );
     await this.discordClient.login(config.DISCORD_TOKEN);
     await this.updateCommandsList();
 
@@ -54,7 +53,6 @@ export class Bot {
     this.modules.set(m.name(), m);
 
     if (this.started) {
-      m.start();
       await this.updateCommandsList();
     }
   }
