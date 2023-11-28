@@ -13,7 +13,7 @@ export default declareModule('example_module', m => {
       Multiline string should be handled properly.
     `,
     'pl-PL': `
-      To jest odpowiedź z modułu *{{ moduleName}}*.
+      To jest odpowiedź z modułu *{{ moduleName }}*.
       Wieloliniowy tekst powinien wyświetlać się poprawnie.
     `
   });
