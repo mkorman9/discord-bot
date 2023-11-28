@@ -25,7 +25,7 @@ export default declareModule('example_module', m => {
   });
 
   m.on('messageCreate', async message => {
-    if (message.channel.type != ChannelType.GuildText || message.author.bot) {
+    if (message.channel.type !== ChannelType.GuildText || message.author.bot) {
       return;
     }
 
