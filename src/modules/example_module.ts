@@ -11,12 +11,19 @@ export default declareModule('example_module', m => {
     'en-US': `
       This is a response from module *{{ moduleName }}*.
       Multiline string should be handled properly.
+    `,
+    'pl-PL': `
+      To jest odpowiedź z modułu *{{ moduleName}}*.
+      Wieloliniowy tekst powinien wyświetlać się poprawnie.
     `
   });
 
   m.template('hello', {
     'en-US': `
       Hello!
+    `,
+    'pl-PL': `
+      Cześć!
     `
   });
 
