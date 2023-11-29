@@ -21,9 +21,7 @@ export class Module {
     try {
       await this.bot.loadModule(this);
 
-      this.once('ready', () => {
-        this.startCronTasks();
-      });
+      this.once('ready', () => this.startCronTasks());
       this.registerListeners();
 
       console.log(`➡️ Module ${this.moduleName} loaded`);
