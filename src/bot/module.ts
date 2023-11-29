@@ -25,16 +25,16 @@ export class Module {
     try {
       await this.bot.loadModule(this);
 
+      this.once('ready', () => {
+        this.cronTasks.forEach(t => t.start());
+      });
+
       this.listenersToRegister.forEach(l => l());
       this.listenersToRegister = [];
 
       this.templateEngine = new TwingEnvironment(
         new TwingLoaderArray(Object.fromEntries(this.templates))
       );
-
-      this.once('ready', () => {
-        this.cronTasks.forEach(t => t.start());
-      });
 
       console.log(`➡️ Module ${this.moduleName} loaded`);
     } catch (e) {
