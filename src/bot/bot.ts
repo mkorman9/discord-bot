@@ -2,13 +2,13 @@ import {Client, Partials, SlashCommandBuilder} from 'discord.js';
 import config from '../config';
 import {Module, ModuleDeclaration} from './module';
 import {CommandsStore} from './util/commands_store';
+import {ClientInitializer} from './util/client_initializer';
 
 export class Bot {
-  private discordClient: Client | undefined;
-  private requestedIntents = new Set<number>();
-  private requestedPartials = new Set<Partials>();
   private modules = new Map<string, Module>();
+  private clientInitializer: ClientInitializer = new ClientInitializer();
   private commandsStore = new CommandsStore();
+
   private started = false;
   private stopping = false;
 
@@ -17,15 +17,11 @@ export class Bot {
       .map(m => m(this))
       .filter(m => !config.IGNORED_MODULES.has(m.name()));
 
-    this.discordClient = new Client({
-      intents: [...this.requestedIntents],
-      partials: [...this.requestedPartials]
-    });
-
+    this.clientInitializer.init();
     await Promise.all(
       modules.map(m => m.load())
     );
-    await this.discordClient.login(config.DISCORD_TOKEN);
+    await this.clientInitializer.login();
     await this.commandsStore.updateRemote();
 
     this.started = true;
@@ -33,14 +29,12 @@ export class Bot {
 
   stop() {
     this.stopping = true;
-    this.modules.forEach(m => m.unload());
-    this.discordClient?.destroy();
 
-    this.discordClient = undefined;
-    this.requestedIntents = new Set();
-    this.requestedPartials = new Set();
-    this.started = false;
+    this.modules.forEach(m => m.unload());
+    this.clientInitializer.destroy();
+
     this.stopping = false;
+    this.started = false;
   }
 
   async loadModule(m: Module) {
@@ -62,11 +56,7 @@ export class Bot {
   }
 
   client(): Client {
-    if (!this.discordClient) {
-      throw new Error('Client is undefined');
-    }
-
-    return this.discordClient;
+    return this.clientInitializer.get();
   }
 
   registerCommand(moduleName: string, command: SlashCommandBuilder) {
@@ -74,10 +64,10 @@ export class Bot {
   }
 
   requestIntents(intents: number[]) {
-    intents.forEach(i => this.requestedIntents.add(i));
+    this.clientInitializer.addIntents(intents);
   }
 
   requestPartials(partials: Partials[]) {
-    partials.forEach(p => this.requestedPartials.add(p));
+    this.clientInitializer.addPartials(partials);
   }
 }
