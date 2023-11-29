@@ -1,14 +1,14 @@
 import {Awaitable, Client, ClientEvents, CommandInteraction, Partials, SlashCommandBuilder} from 'discord.js';
-import cron, {ScheduledTask} from 'node-cron';
 import {Bot} from './bot';
 import {LocalizedTemplate, TemplateContent, TemplateEngine, TemplateRenderContext} from './template_engine';
+import {CronExecutor} from './cron_executor';
+import {ListenersStore} from './listeners_store';
 
 export type ModuleDeclaration = (bot: Bot) => Module;
 
 export class Module {
-  private cronTasks: ScheduledTask[] = [];
-  private listenersToRegister: (() => void)[] = [];
-  private listenersToUnregister: (() => void)[] = [];
+  private listenersStore = new ListenersStore();
+  private cronExecutor = new CronExecutor();
   private templateEngine = new TemplateEngine();
 
   constructor(
@@ -21,8 +21,8 @@ export class Module {
     try {
       await this.bot.loadModule(this);
 
-      this.once('ready', () => this.startCronTasks());
-      this.registerListeners();
+      this.once('ready', () => this.cronExecutor.start());
+      this.listenersStore.start();
 
       console.log(`➡️ Module ${this.moduleName} loaded`);
     } catch (e) {
@@ -32,8 +32,8 @@ export class Module {
 
   unload() {
     try {
-      this.stopCronTasks();
-      this.unregisterListeners();
+      this.cronExecutor.stop();
+      this.listenersStore.stop();
 
       this.bot.unloadModule(this.moduleName);
 
@@ -70,14 +70,14 @@ export class Module {
   }
 
   on<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>): this {
-    this.listenersToRegister.push(() => this.bot.client().on(event, listener));
-    this.listenersToUnregister.push(() => this.off(event, listener));
+    this.listenersStore.onStart(() => this.bot.client().on(event, listener));
+    this.listenersStore.onStop(() => this.off(event, listener));
     return this;
   }
 
   once<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>): this {
-    this.listenersToRegister.push(() => this.bot.client().once(event, listener));
-    this.listenersToUnregister.push(() => this.off(event, listener));
+    this.listenersStore.onStart(() => this.bot.client().once(event, listener));
+    this.listenersStore.onStop(() => this.off(event, listener));
     return this;
   }
 
@@ -92,16 +92,7 @@ export class Module {
   }
 
   cron(expression: string, listener: () => Awaitable<void>): this {
-    const task = cron.schedule(
-      expression,
-      listener,
-      {
-        scheduled: false,
-        runOnInit: false
-      }
-    );
-
-    this.cronTasks.push(task);
+    this.cronExecutor.registerTask(expression, listener);
     return this;
   }
 
@@ -118,23 +109,6 @@ export class Module {
     });
 
     return this;
-  }
-
-  private registerListeners() {
-    this.listenersToRegister.forEach(l => l());
-    this.listenersToRegister = [];
-  }
-
-  private unregisterListeners() {
-    this.listenersToUnregister.forEach(l => l());
-  }
-
-  private startCronTasks() {
-    this.cronTasks.forEach(t => t.start());
-  }
-
-  private stopCronTasks() {
-    this.cronTasks.forEach(t => t.stop());
   }
 }
 
