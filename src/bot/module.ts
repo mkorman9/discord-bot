@@ -1,19 +1,15 @@
 import {Awaitable, Client, ClientEvents, CommandInteraction, Partials, SlashCommandBuilder} from 'discord.js';
 import cron, {ScheduledTask} from 'node-cron';
 import {Bot} from './bot';
-import {TwingEnvironment, TwingLoaderArray} from 'twing';
-import config from '../config';
+import {LocalizedTemplate, TemplateContent, TemplateEngine, TemplateRenderContext} from './template_engine';
 
 export type ModuleDeclaration = (bot: Bot) => Module;
 
 export class Module {
-  private readonly DefaultTemplateLanguage = 'en-US';
-
   private cronTasks: ScheduledTask[] = [];
   private listenersToRegister: (() => void)[] = [];
   private listenersToUnregister: (() => void)[] = [];
-  private templates = new Map<string, string>();
-  private templateEngine: TwingEnvironment | undefined;
+  private templateEngine = new TemplateEngine();
 
   constructor(
     private moduleName: string,
@@ -26,15 +22,9 @@ export class Module {
       await this.bot.loadModule(this);
 
       this.once('ready', () => {
-        this.cronTasks.forEach(t => t.start());
+        this.startCronTasks();
       });
-
-      this.listenersToRegister.forEach(l => l());
-      this.listenersToRegister = [];
-
-      this.templateEngine = new TwingEnvironment(
-        new TwingLoaderArray(Object.fromEntries(this.templates))
-      );
+      this.registerListeners();
 
       console.log(`➡️ Module ${this.moduleName} loaded`);
     } catch (e) {
@@ -44,10 +34,11 @@ export class Module {
 
   unload() {
     try {
-      this.cronTasks.forEach(t => t.stop());
-      this.listenersToUnregister.forEach(l => l());
+      this.stopCronTasks();
+      this.unregisterListeners();
 
       this.bot.unloadModule(this.moduleName);
+
       console.log(`⬅️ Module ${this.moduleName} unloaded`);
     } catch (e) {
       console.log(`🚫 Failed to unload module ${this.moduleName}: ${e}`);
@@ -72,27 +63,12 @@ export class Module {
     return this;
   }
 
-  template(name: string, content: Record<string, string> | string) {
-    if (typeof content === 'string') {
-      this.templates.set(name, content.replace(/\n  +/g, '\n'));
-    } else {
-      const localized = content[config.BOT_LANGUAGE] || content[this.DefaultTemplateLanguage];
-      if (localized) {
-        this.template(name, localized);
-      }
-    }
+  template(name: string, content: LocalizedTemplate | TemplateContent) {
+    this.templateEngine.registerTemplate(name, content);
   }
 
-  async render(name: string, context: Record<string, unknown>): Promise<string> {
-    if (!this.templateEngine) {
-      throw new Error('Template engine not initialized');
-    }
-
-    if (!this.templates.has(name)) {
-      throw new Error('Template cannot be resolved');
-    }
-
-    return await this.templateEngine.render(name, context);
+  async render(name: string, context: TemplateRenderContext): Promise<string> {
+    return this.templateEngine.render(name, context);
   }
 
   on<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>): this {
@@ -144,6 +120,23 @@ export class Module {
     });
 
     return this;
+  }
+
+  private registerListeners() {
+    this.listenersToRegister.forEach(l => l());
+    this.listenersToRegister = [];
+  }
+
+  private unregisterListeners() {
+    this.listenersToUnregister.forEach(l => l());
+  }
+
+  private startCronTasks() {
+    this.cronTasks.forEach(t => t.start());
+  }
+
+  private stopCronTasks() {
+    this.cronTasks.forEach(t => t.stop());
   }
 }
 
