@@ -1,5 +1,5 @@
 import {TwingEnvironment, TwingLoaderArray} from 'twing';
-import config from '../config';
+import config from '../../config';
 
 export type Language = string;
 export type TemplateContent = string;

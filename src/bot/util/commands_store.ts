@@ -1,5 +1,5 @@
 import {REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes, SlashCommandBuilder} from 'discord.js';
-import config from '../config';
+import config from '../../config';
 
 export class CommandsStore {
   private commandsPerModule = new Map<string, SlashCommandBuilder[]>();

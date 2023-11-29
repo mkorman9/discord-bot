@@ -1,7 +1,7 @@
 import {Client, Partials, SlashCommandBuilder} from 'discord.js';
 import config from '../config';
 import {Module, ModuleDeclaration} from './module';
-import {CommandsStore} from './commands_store';
+import {CommandsStore} from './util/commands_store';
 
 export class Bot {
   private discordClient: Client | undefined;

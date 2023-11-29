@@ -1,8 +1,8 @@
 import {Awaitable, Client, ClientEvents, CommandInteraction, Partials, SlashCommandBuilder} from 'discord.js';
 import {Bot} from './bot';
-import {LocalizedTemplate, TemplateContent, TemplateEngine, TemplateRenderContext} from './template_engine';
-import {CronExecutor} from './cron_executor';
-import {ListenersStore} from './listeners_store';
+import {LocalizedTemplate, TemplateContent, TemplateEngine, TemplateRenderContext} from './util/template_engine';
+import {CronExecutor} from './util/cron_executor';
+import {ListenersStore} from './util/listeners_store';
 
 export type ModuleDeclaration = (bot: Bot) => Module;
 
