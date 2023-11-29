@@ -1,20 +1,14 @@
-import {
-  Client,
-  Partials,
-  REST,
-  RESTPostAPIChatInputApplicationCommandsJSONBody,
-  Routes,
-  SlashCommandBuilder
-} from 'discord.js';
+import {Client, Partials, SlashCommandBuilder} from 'discord.js';
 import config from '../config';
 import {Module, ModuleDeclaration} from './module';
+import {CommandsStore} from './commands_store';
 
 export class Bot {
   private discordClient: Client | undefined;
   private requestedIntents = new Set<number>();
   private requestedPartials = new Set<Partials>();
   private modules = new Map<string, Module>();
-  private commandsPerModule = new Map<string, SlashCommandBuilder[]>();
+  private commandsStore = new CommandsStore();
   private started = false;
   private stopping = false;
 
@@ -32,7 +26,7 @@ export class Bot {
       modules.map(m => m.load())
     );
     await this.discordClient.login(config.DISCORD_TOKEN);
-    await this.updateCommandsList();
+    await this.commandsStore.updateRemote();
 
     this.started = true;
   }
@@ -53,16 +47,16 @@ export class Bot {
     this.modules.set(m.name(), m);
 
     if (this.started) {
-      await this.updateCommandsList();
+      await this.commandsStore.updateRemote();
     }
   }
 
   unloadModule(moduleName: string) {
     this.modules.delete(moduleName);
-    this.commandsPerModule.delete(moduleName);
+    this.commandsStore.deleteForModule(moduleName);
 
     if (!this.stopping) {
-      this.updateCommandsList()
+      this.commandsStore.updateRemote()
         .catch(e => console.log(`🚫 Failed to unregister commands of module ${moduleName}: ${e.stack}`));
     }
   }
@@ -76,13 +70,7 @@ export class Bot {
   }
 
   registerCommand(moduleName: string, command: SlashCommandBuilder) {
-    const commandsList = this.commandsPerModule.get(moduleName);
-    if (commandsList) {
-      commandsList.push(command);
-      return;
-    }
-
-    this.commandsPerModule.set(moduleName, [command]);
+    this.commandsStore.register(moduleName, command);
   }
 
   requestIntents(intents: number[]) {
@@ -91,15 +79,5 @@ export class Bot {
 
   requestPartials(partials: Partials[]) {
     partials.forEach(p => this.requestedPartials.add(p));
-  }
-
-  private async updateCommandsList() {
-    const payload: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
-    this.commandsPerModule.forEach((commands, _) => {
-      commands.forEach(c => payload.push(c.toJSON()));
-    });
-
-    const rest = new REST().setToken(config.DISCORD_TOKEN);
-    await rest.put(Routes.applicationCommands(config.DISCORD_APP_ID), { body: payload });
   }
 }
