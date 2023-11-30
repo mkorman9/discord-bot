@@ -3,6 +3,7 @@ import {Bot} from './bot';
 import {LocalizedTemplate, TemplateContent, TemplateEngine, TemplateRenderContext} from './util/template_engine';
 import {CronExecutor} from './util/cron_executor';
 import {ListenersStore} from './util/listeners_store';
+import {TwingFilter, TwingFunction} from 'twing';
 
 export type ModuleDeclaration = (bot: Bot) => Module;
 
@@ -63,6 +64,18 @@ export class Module {
 
   template(name: string, content: LocalizedTemplate | TemplateContent) {
     this.templateEngine.registerTemplate(name, content);
+  }
+
+  templateFilter(filter: TwingFilter) {
+    this.templateEngine.registerFilter(filter);
+  }
+
+  templateFunction(func: TwingFunction) {
+    this.templateEngine.registerFunction(func);
+  }
+
+  templateGlobal(name: string, value: unknown) {
+    this.templateEngine.registerGlobal(name, value);
   }
 
   async render(name: string, context: TemplateRenderContext): Promise<string> {
