@@ -22,7 +22,7 @@ export class Module {
       await this.bot.loadModule(this);
 
       this.once('ready', () => this.cronExecutor.start());
-      this.listenersStore.start();
+      this.listenersStore.register(this.bot.client());
 
       console.log(`➡️ Module ${this.moduleName} loaded`);
     } catch (e) {
@@ -33,7 +33,7 @@ export class Module {
   unload() {
     try {
       this.cronExecutor.stop();
-      this.listenersStore.stop();
+      this.listenersStore.unregister(this.bot.client());
 
       this.bot.unloadModule(this.moduleName);
 
@@ -70,14 +70,12 @@ export class Module {
   }
 
   on<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>): this {
-    this.listenersStore.onStart(() => this.bot.client().on(event, listener));
-    this.listenersStore.onStop(() => this.off(event, listener));
+    this.listenersStore.on(event, listener);
     return this;
   }
 
   once<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>): this {
-    this.listenersStore.onStart(() => this.bot.client().once(event, listener));
-    this.listenersStore.onStop(() => this.off(event, listener));
+    this.listenersStore.once(event, listener);
     return this;
   }
 

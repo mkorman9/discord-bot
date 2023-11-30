@@ -1,22 +1,26 @@
-export type ListenerJob = () => void;
+import {Awaitable, Client, ClientEvents} from 'discord.js';
+
+type ListenerAction = (client: Client) => void;
 
 export class ListenersStore {
-  private startJobs: ListenerJob[] = [];
-  private stopJobs: ListenerJob[] = [];
+  private toRegister: ListenerAction[] = [];
+  private toUnregister: ListenerAction[] = [];
 
-  start() {
-    this.startJobs.forEach(j => j());
+  register(client: Client) {
+    this.toRegister.forEach(a => a(client));
   }
 
-  stop() {
-    this.stopJobs.forEach(j => j());
+  unregister(client: Client) {
+    this.toUnregister.forEach(a => a(client));
   }
 
-  onStart(job: ListenerJob) {
-    this.startJobs.push(job);
+  on<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>) {
+    this.toRegister.push(client => client.on(event, listener));
+    this.toUnregister.push(client => client.off(event, listener));
   }
 
-  onStop(job: ListenerJob) {
-    this.stopJobs.push(job);
+  once<E extends keyof ClientEvents>(event: E, listener: (...args: ClientEvents[E]) => Awaitable<void>) {
+    this.toRegister.push(client => client.once(event, listener));
+    this.toUnregister.push(client => client.off(event, listener));
   }
 }
