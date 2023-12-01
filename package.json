@@ -9,10 +9,10 @@
   "scripts": {
     "lint": "eslint --ext .ts src/",
     "fix": "eslint --ext .ts --fix src/",
-    "test": "jest",
+    "test": "jest --detectOpenHandles --forceExit",
     "build": "tsc --build",
-    "start": "tsc-watch --onSuccess \"node .\"",
-    "serve": "exec node --enable-source-maps ."
+    "dev": "tsc-watch --onSuccess \"node --enable-source-maps .\"",
+    "start": "exec node --enable-source-maps ."
   },
   "dependencies": {
     "discord.js": "^14.11.0",
