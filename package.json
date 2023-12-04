@@ -5,14 +5,14 @@
   "author": "Michal Korman",
   "license": "MIT",
   "private": true,
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "lint": "eslint --ext .ts src/",
     "fix": "eslint --ext .ts --fix src/",
     "test": "jest --detectOpenHandles --forceExit",
     "build": "tsc --build",
-    "dev": "tsc-watch --onSuccess \"node --enable-source-maps .\"",
-    "start": "exec node --enable-source-maps ."
+    "start": "tsc-watch --onSuccess \"node --enable-source-maps .\"",
+    "serve": "exec node --enable-source-maps ."
   },
   "dependencies": {
     "discord.js": "^14.11.0",
